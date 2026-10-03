@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>最近ハマってるゲーム | TKS</title>
+  <style>
+    :root {
+      --bg-main: #0b132b;
+      --bg-card: #1c2541;
+      --accent-cyan: #00f0ff;
+      --text-main: #f1f5f9;
+      --text-sub: #94a3b8;
+      --border-color: #2e3d66;
+    }
+    body {
+      margin: 0;
+      padding: 40px 20px;
+      font-family: "Helvetica Neue", Arial, sans-serif;
+      color: var(--text-main);
+      background-color: var(--bg-main);
+      background-image: 
+        linear-gradient(rgba(0, 240, 255, 0.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0, 240, 255, 0.04) 1px, transparent 1px);
+      background-size: 32px 32px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 80vh;
+    }
+    .game-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      max-width: 800px;
+      width: 100%;
+      padding: 30px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+      text-align: center;
+    }
+    h1 {
+      color: var(--accent-cyan);
+      margin-top: 0;
+      font-size: 1.8rem;
+      letter-spacing: 2px;
+    }
+    p {
+      color: var(--text-sub);
+      line-height: 1.6;
+      margin-bottom: 25px;
+    }
+    .video-wrapper {
+      width: 100%;
+      border-radius: 8px;
+      overflow: hidden;
+      border: 1px solid var(--border-color);
+      background: #000;
+      margin-bottom: 25px;
+    }
+    video {
+      width: 100%;
+      height: auto;
+      display: block;
+    }
+    .back-btn {
+      display: inline-block;
+      padding: 12px 30px;
+      color: var(--bg-main);
+      background: var(--accent-cyan);
+      text-decoration: none;
+      font-weight: bold;
+      border-radius: 6px;
+      transition: opacity 0.2s ease;
+    }
+    .back-btn:hover {
+      opacity: 0.8;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="game-card">
+    <h1>FAVORITE GAME</h1>
+    <p>最近はまってるゲーム</p>
+    
+    <div class="video-wrapper">
+      <!-- 引っ張ってきた動画ファイルの名前をここに入れるら -->
+      <video src="レイダース" controls autoplay muted loop playsinline></video>
+    </div>
+
+    <div>
+      <a href="index.html" class="back-btn">← ポートフォリオに戻る</a>
+    </div>
+  </div>
+
+</body>
+</html>
