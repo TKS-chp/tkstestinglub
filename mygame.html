@@ -1,0 +1,1805 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>サイバータンクアリーナ | 自作ゲーム</title>
+    <style>
+        html, body { margin: 0; padding: 0; width: 100%; height: 100%; background: #050508; overflow: hidden; font-family: 'Helvetica Neue', Arial, sans-serif; display: flex; }
+        #sidebar { width: 240px; height: 100%; background: #0a0a12; border-right: 2px solid #00ffcc; padding: 20px; box-sizing: border-box; color: #00ffcc; display: flex; flex-direction: column; gap: 15px; box-shadow: 5px 0 15px rgba(0,0,0,0.8); z-index: 10; }
+        h2 { margin: 0; color: #00ffcc; font-size: 20px; text-shadow: 0 0 8px rgba(0,255,204,0.5); letter-spacing: 1px; }
+        .status-item { background: rgba(0,0,0,0.5); padding: 10px; border-radius: 6px; border: 1px solid rgba(0,255,204,0.2); font-size: 13px; }
+        .status-val { font-weight: bold; color: #fff; font-size: 16px; float: right; }
+        .btn { background: #00ffcc; color: #000; border: none; padding: 8px 14px; font-size: 13px; border-radius: 4px; cursor: pointer; font-weight: bold; transition: 0.2s; width: 100%; text-transform: uppercase; text-align: center; text-decoration: none; display: block; box-sizing: border-box; }
+        .btn:hover { background: #fff; box-shadow: 0 0 10px #fff; }
+        
+        #charge-bar-container { width: 100%; background: #222; height: 12px; border-radius: 4px; overflow: hidden; display: none; border: 1px solid #00ff00; margin-top: 5px; position: relative; }
+        #charge-bar { width: 0%; height: 100%; background: #00ff00; box-shadow: 0 0 8px #00ff00; transition: width 0.05s linear; }
+        .charge-marker { position: absolute; top: 0; bottom: 0; width: 2px; background: rgba(255,255,255,0.8); z-index: 2; }
+        .marker-1 { left: 45.1%; } 
+        .marker-2 { left: 62.5%; } 
+
+        #skill-bar-container { width: 100%; background: #222; height: 12px; border-radius: 4px; overflow: hidden; border: 1px solid #0088ff; margin-top: 5px; position: relative; }
+        #skill-bar { width: 100%; height: 100%; background: #0088ff; box-shadow: 0 0 8px #0088ff; transition: width 0.1s linear; }
+        
+        #ult-bar-container { width: 100%; background: #222; height: 12px; border-radius: 4px; overflow: hidden; border: 1px solid #ffaa00; margin-top: 5px; position: relative; }
+        #ult-bar { width: 100%; height: 100%; background: #ffaa00; box-shadow: 0 0 8px #ffaa00; transition: width 0.1s linear; }
+
+        #game-area { flex: 1; height: 100%; position: relative; background: #050508; cursor: none; }
+        canvas { display: block; background: #0a0a10; }
+        #game-status { font-size: 36px; font-weight: bold; color: #ff0055; text-align: center; position: absolute; width: 100%; top: 42%; pointer-events: none; text-shadow: 0 0 15px rgba(255,0,85,0.8); font-family: monospace; z-index: 20; }
+        
+        #overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 30; display: none; flex-direction: column; align-items: center; justify-content: center; gap: 20px; cursor: default; }
+        .menu-title { font-size: 40px; color: #00ffcc; text-shadow: 0 0 15px #00ffcc; font-weight: bold; margin-bottom: 20px; font-family: monospace; letter-spacing: 2px; text-align: center; }
+        .menu-btn { background: #111; color: #00ffcc; border: 2px solid #00ffcc; padding: 15px 30px; font-size: 18px; cursor: pointer; font-weight: bold; transition: 0.2s; min-width: 250px; text-align: center; letter-spacing: 1px; font-family: monospace; }
+        .menu-btn:hover { background: #00ffcc; color: #000; box-shadow: 0 0 20px #00ffcc; }
+        .menu-btn:disabled { border-color: #444; color: #444; cursor: not-allowed; }
+        .menu-btn:disabled:hover { background: transparent; color: #444; box-shadow: none; }
+        
+        .delete-btn { background: #111; color: #ff3333; border: 2px solid #ff3333; padding: 15px; font-size: 18px; cursor: pointer; font-weight: bold; transition: 0.2s; font-family: monospace; }
+        .delete-btn:hover { background: #ff3333; color: #000; box-shadow: 0 0 15px #ff3333; }
+
+        #stage-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; max-width: 500px; margin-top: 10px; }
+        .stage-btn { background: #222; color: #fff; border: 1px solid #555; padding: 15px; font-size: 18px; cursor: pointer; font-weight: bold; font-family: monospace; transition: 0.2s; }
+        .stage-btn:hover:not(:disabled) { border-color: #00ffcc; color: #00ffcc; box-shadow: 0 0 10px rgba(0,255,204,0.5); }
+        .stage-btn:disabled { color: #444; border-color: #333; background: #111; cursor: not-allowed; }
+        
+        .garage-item { background: #1a1a24; border: 1px solid #00ffcc; padding: 15px; border-radius: 8px; width: 350px; display: flex; justify-content: space-between; align-items: center; }
+        .garage-desc { color: #fff; font-family: monospace; font-size: 14px; }
+        .upgrade-btn { background: #ffaa00; color: #000; border: none; padding: 8px 15px; cursor: pointer; font-weight: bold; font-family: monospace; border-radius: 4px; }
+        .upgrade-btn:hover:not(:disabled) { background: #fff; box-shadow: 0 0 10px #ffaa00; }
+        .upgrade-btn:disabled { background: #555; color: #888; cursor: not-allowed; }
+
+        #bgm-btn { background: #222; color: #fff; border: 1px solid #555; margin-bottom: 5px; }
+        #bgm-btn.active { background: #00ffcc; color: #000; border: 1px solid #00ffcc; box-shadow: 0 0 10px #00ffcc; }
+    </style>
+</head>
+<body>
+
+<audio id="bgm-audio" src="bgm.mp3" loop></audio>
+
+<div id="sidebar">
+    <h2 id="mission-title">ARENA MENU</h2>
+    <hr style="border-color: #00ffcc; margin: 5px 0;">
+    
+    <div class="status-item" style="border-color: #ffaa00;">
+        ⚙️ GEARS <span id="gear-count" class="status-val" style="color: #ffaa00;">0</span>
+    </div>
+
+    <div class="status-item">❤️️ 1P HP <span id="player-hp" class="status-val">-</span></div>
+    <div class="status-item">🎯 ENEMIES <span id="enemy-count" class="status-val">-</span></div>
+    <div class="status-item">🟢 AMMO <span id="bullet-count" class="status-val">- / 5</span></div>
+    
+    <div class="status-item" style="border-color: #00ff00;">
+        <span style="color:#00ff00; font-weight:bold;">🔥 LASER CHARGE</span>
+        <span id="charge-text" style="color:#00ff00; font-weight:bold; float:right; font-size:11px;">0%</span>
+        <div id="charge-bar-container">
+            <div class="charge-marker marker-1"></div>
+            <div class="charge-marker marker-2"></div>
+            <div id="charge-bar"></div>
+        </div>
+    </div>
+
+    <div class="status-item" style="border-color: #0088ff;">
+        <span style="color:#0088ff; font-weight:bold;">⚡ SKILL [SHIFT]</span>
+        <span id="skill-text" style="color:#0088ff; font-weight:bold; float:right; font-size:11px;">READY</span>
+        <div id="skill-bar-container">
+            <div id="skill-bar"></div>
+        </div>
+    </div>
+
+    <div class="status-item" style="border-color: #ffaa00;">
+        <span style="color:#ffaa00; font-weight:bold;">🚀 ULT [SPACE]</span>
+        <span id="ult-text" style="color:#ffaa00; font-weight:bold; float:right; font-size:11px;">READY</span>
+        <div id="ult-bar-container">
+            <div id="ult-bar"></div>
+        </div>
+    </div>
+    
+    <div style="margin-top: auto; display: flex; flex-direction: column; gap: 8px;">
+        <!-- ★ トップに戻るボタンを追加したに -->
+        <a href="index.html" class="btn" style="background:#111; color:#00ffcc; border:1px solid #00ffcc;">← サイトに戻る</a>
+        <button id="bgm-btn" class="btn" onclick="toggleBGM()">🎵 BGM: OFF</button>
+        <button class="btn" onclick="toggleFullscreen()">🖥️ 全画面表示</button>
+        <button class="btn" onclick="retryStage()" style="background:#ffaa00;">🔄 やり直し</button>
+    </div>
+</div>
+
+<div id="game-area">
+    <div id="game-status"></div>
+    <div id="overlay"></div>
+    <canvas id="tankCanvas"></canvas>
+</div>
+
+<script>
+    const canvas = document.getElementById('tankCanvas');
+    const ctx = canvas.getContext('2d');
+
+    const COLS = 20;
+    const ROWS = 14;
+    let CELL_SIZE = 45;
+    let offsetX = 0;
+    let offsetY = 0;
+
+    let grid = [];
+    let player;
+    let enemies = [];
+    let allies = [];
+    let bullets = [];
+    let particles = []; 
+    let floatingTexts = []; 
+    let garageZones = []; 
+    
+    let mouseX = 0, mouseY = 0;
+    let keys = {};
+    let audioCtx = null;
+    
+    let currentStage = 1;
+    let maxUnlockedStage = 1; 
+    const MAX_STAGES = 20;
+
+    let playerGears = 0;
+    let hpUpgradeLevel = 0;
+    let speedUpgradeLevel = 0;
+    
+    const BASE_MAX_HP = 3;
+    const BASE_SPEED = 2.5;
+
+    let gameState = "slot_select";
+    let currentSlot = 1;
+    let countdownStartTime = 0;
+    let gameClearedAll = false; 
+
+    const CHARGE_LV1 = 650;
+    const CHARGE_LV2 = 900;
+    const CHARGE_MAX = 1440;
+
+    let isCharging = false;
+    let chargeStartTime = 0;
+    let chargePercent = 0;
+    let lastChargeLevel = 0; 
+    let chargeMaxReached = false;
+
+    const SKILL_COOLDOWN = 5000;
+    const ULT_COOLDOWN = 20000; 
+
+    let activeChargeOscLow = null;
+    let activeChargeOscHigh = null;
+    let activeChargeGain = null;
+
+    let bgmEnabled = false;
+    const bgmAudio = document.getElementById('bgm-audio');
+    bgmAudio.volume = 0.3; 
+
+    function getStorageKey(key) {
+        return `cyber_tank_s${currentSlot}_${key}`;
+    }
+
+    function loadGameData() {
+        try {
+            maxUnlockedStage = parseInt(localStorage.getItem(getStorageKey('max_stage')) || 1, 10);
+            playerGears = parseInt(localStorage.getItem(getStorageKey('gears')) || 0, 10);
+            hpUpgradeLevel = parseInt(localStorage.getItem(getStorageKey('hp_lv')) || 0, 10);
+            speedUpgradeLevel = parseInt(localStorage.getItem(getStorageKey('speed_lv')) || 0, 10);
+            updateUI();
+        } catch(e) {}
+    }
+
+    function saveGameData() {
+        try {
+            if (currentStage >= maxUnlockedStage && maxUnlockedStage < MAX_STAGES && gameState === "intermission") {
+                maxUnlockedStage = currentStage + 1;
+            }
+            localStorage.setItem(getStorageKey('max_stage'), maxUnlockedStage);
+            localStorage.setItem(getStorageKey('gears'), playerGears);
+            localStorage.setItem(getStorageKey('hp_lv'), hpUpgradeLevel);
+            localStorage.setItem(getStorageKey('speed_lv'), speedUpgradeLevel);
+        } catch(e) {}
+    }
+
+    function resetSlot(slot) {
+        if (confirm(`スロット ${slot} のセーブデータを初期化しますか？`)) {
+            localStorage.removeItem(`cyber_tank_s${slot}_max_stage`);
+            localStorage.removeItem(`cyber_tank_s${slot}_gears`);
+            localStorage.removeItem(`cyber_tank_s${slot}_hp_lv`);
+            localStorage.removeItem(`cyber_tank_s${slot}_speed_lv`);
+            showSlotMenu();
+        }
+    }
+
+    function showSlotMenu() {
+        gameState = "slot_select";
+        stopChargeSound();
+        const overlay = document.getElementById('overlay');
+        overlay.style.display = "flex";
+        document.getElementById('game-status').innerText = "";
+        
+        let html = `<div class="menu-title" style="font-size: 40px; letter-spacing: 2px;">SELECT SAVE SLOT</div>`;
+        html += `<div style="display:flex; flex-direction:column; gap:15px; width:500px;">`;
+        
+        for (let i = 1; i <= 3; i++) {
+            let stg = parseInt(localStorage.getItem(`cyber_tank_s${i}_max_stage`) || 1, 10);
+            let gr = parseInt(localStorage.getItem(`cyber_tank_s${i}_gears`) || 0, 10);
+            let hpLv = parseInt(localStorage.getItem(`cyber_tank_s${i}_hp_lv`) || 0, 10);
+            let spdLv = parseInt(localStorage.getItem(`cyber_tank_s${i}_speed_lv`) || 0, 10);
+            
+            let isEmpty = (stg === 1 && gr === 0 && hpLv === 0 && spdLv === 0);
+            let text = isEmpty ? "NEW DATA" : `STAGE ${stg} | GEARS: ${gr}`;
+            let color = isEmpty ? "#aaa" : "#ffaa00";
+            
+            html += `
+            <div style="display:flex; gap:10px; width:100%;">
+                <button class="menu-btn" style="flex:1; text-align:left; font-size:16px;" onclick="selectSlot(${i})">
+                    SLOT ${i} <span style="float:right; color:${color};">${text}</span>
+                </button>
+                <button class="delete-btn" onclick="resetSlot(${i})" title="データ初期化">🗑️</button>
+            </div>`;
+        }
+        
+        html += `</div>`;
+        overlay.innerHTML = html;
+    }
+
+    function selectSlot(slot) {
+        currentSlot = slot;
+        showTitleMenu();
+    }
+
+    function toggleBGM() {
+        bgmEnabled = !bgmEnabled;
+        const btn = document.getElementById('bgm-btn');
+        if(bgmEnabled) {
+            btn.innerText = "🎵 BGM: ON";
+            btn.classList.add('active');
+            if(gameState === "playing" || gameState === "countdown" || gameState === "garage_field") {
+                bgmAudio.play().catch(e => {});
+            }
+        } else {
+            btn.innerText = "🎵 BGM: OFF";
+            btn.classList.remove('active');
+            bgmAudio.pause();
+        }
+    }
+
+    function resizeCanvas() {
+        const area = document.getElementById('game-area');
+        let w = area.clientWidth > 0 ? area.clientWidth : (window.innerWidth - 240);
+        let h = area.clientHeight > 0 ? area.clientHeight : window.innerHeight;
+        
+        canvas.width = w;
+        canvas.height = h;
+        
+        CELL_SIZE = Math.min(canvas.width / COLS, canvas.height / ROWS);
+        offsetX = (canvas.width - (COLS * CELL_SIZE)) / 2;
+        offsetY = (canvas.height - (ROWS * CELL_SIZE)) / 2;
+    }
+
+    function toggleFullscreen() {
+        if (!document.fullscreenElement) {
+            document.documentElement.requestFullscreen().catch(err => alert(err.message));
+        } else {
+            document.exitFullscreen();
+        }
+    }
+
+    function showTitleMenu() {
+        gameState = "title";
+        stopChargeSound();
+        loadGameData(); 
+        
+        const overlay = document.getElementById('overlay');
+        overlay.style.display = "flex";
+        document.getElementById('game-status').innerText = "";
+        
+        let continueBtnDisabled = maxUnlockedStage <= 1 ? "disabled" : "";
+        let safeStage = maxUnlockedStage <= MAX_STAGES ? maxUnlockedStage : MAX_STAGES;
+        
+        overlay.innerHTML = `
+            <div class="menu-title" style="font-size: 52px; letter-spacing: 5px;">CYBER TANK<br><span style="font-size: 24px; color:#00ffcc;">ARENA</span></div>
+            <div style="color:#aaa; font-family:monospace; margin-bottom:10px;">CURRENT SLOT: ${currentSlot}</div>
+            <button class="menu-btn" onclick="startSpecificStage(${safeStage})" ${continueBtnDisabled}>CONTINUE (STAGE ${safeStage})</button>
+            <button class="menu-btn" onclick="startSpecificStage(1)">NEW GAME</button>
+            <button class="menu-btn" onclick="enterGarage()">ENTER GARAGE</button>
+            <button class="menu-btn" onclick="showStageSelect()">STAGE SELECT</button>
+            <button class="menu-btn" style="margin-top:20px; border-color:#aaa; color:#aaa;" onclick="showSlotMenu()">CHANGE SLOT</button>
+        `;
+    }
+
+    function enterGarage() {
+        document.getElementById('overlay').style.display = "none";
+        gameState = "garage_field";
+        document.getElementById('mission-title').innerText = "GARAGE";
+        
+        stopChargeSound();
+        resizeCanvas();
+        
+        grid = Array(ROWS).fill().map(() => Array(COLS).fill(0));
+        for (let c = 0; c < COLS; c++) { grid[0][c] = 1; grid[ROWS-1][c] = 1; }
+        for (let r = 0; r < ROWS; r++) { grid[r][0] = 1; grid[r][COLS-1] = 1; }
+        
+        for (let r = 0; r < 5; r++) { grid[r][7] = 1; grid[r][12] = 1; }
+        
+        player = new Tank(10, 10, "#00ffcc", 'player');
+        enemies = [];
+        allies = [];
+        bullets = [];
+        particles = [];
+        floatingTexts = [];
+
+        garageZones = [
+            { type: 'hp', cx: 3.5, cy: 4.5, color: '#ff0055', label: 'HP UPGRADE' },
+            { type: 'speed', cx: 15.5, cy: 4.5, color: '#00ffcc', label: 'SPEED UPGRADE' },
+            { type: 'exit', cx: 9.5, cy: 3, color: '#ffaa00', label: 'EXIT TO TITLE' }
+        ];
+
+        updateUI();
+    }
+
+    function openGarageMenu(type) {
+        gameState = "garage_menu";
+        const overlay = document.getElementById('overlay');
+        overlay.style.display = "flex";
+        
+        if (type === 'hp') {
+            let hpCost = 100 + (hpUpgradeLevel * 50);
+            let hpMaxed = hpUpgradeLevel >= 5;
+            overlay.innerHTML = `
+                <div class="menu-title" style="color:#ff0055; font-size:32px;">HP UPGRADE TERMINAL</div>
+                <div style="color: #fff; font-size: 20px; font-family: monospace;">YOUR GEARS: <span style="color:#ffaa00;">${playerGears} ⚙️</span></div>
+                <div style="color: #00ffcc; font-size: 18px; margin: 20px 0; font-family: monospace;">Current Max HP: ${BASE_MAX_HP + hpUpgradeLevel} (LV.${hpUpgradeLevel}/5)</div>
+                <button class="menu-btn" ${hpMaxed || playerGears < hpCost ? "disabled" : ""} onclick="upgrade('hp', ${hpCost})">
+                    ${hpMaxed ? "MAX LEVEL REACHED" : "UPGRADE COST: " + hpCost + "⚙️"}
+                </button>
+                <button class="menu-btn" style="margin-top:20px;" onclick="closeGarageMenu()">LEAVE TERMINAL</button>
+            `;
+        } else if (type === 'speed') {
+            let speedCost = 150 + (speedUpgradeLevel * 80);
+            let speedMaxed = speedUpgradeLevel >= 5;
+            overlay.innerHTML = `
+                <div class="menu-title" style="color:#00ffcc; font-size:32px;">SPEED UPGRADE TERMINAL</div>
+                <div style="color: #fff; font-size: 20px; font-family: monospace;">YOUR GEARS: <span style="color:#ffaa00;">${playerGears} ⚙️</span></div>
+                <div style="color: #00ffcc; font-size: 18px; margin: 20px 0; font-family: monospace;">Current Speed LV: ${speedUpgradeLevel}/5</div>
+                <button class="menu-btn" ${speedMaxed || playerGears < speedCost ? "disabled" : ""} onclick="upgrade('speed', ${speedCost})">
+                    ${speedMaxed ? "MAX LEVEL REACHED" : "UPGRADE COST: " + speedCost + "⚙️"}
+                </button>
+                <button class="menu-btn" style="margin-top:20px;" onclick="closeGarageMenu()">LEAVE TERMINAL</button>
+            `;
+        } else if (type === 'exit') {
+            showTitleMenu();
+        }
+    }
+
+    function closeGarageMenu() {
+        keys['enter'] = false; 
+        document.getElementById('overlay').style.display = "none";
+        gameState = "garage_field";
+    }
+
+    function upgrade(type, cost) {
+        if (playerGears >= cost) {
+            playerGears -= cost;
+            if (type === 'hp') hpUpgradeLevel++;
+            if (type === 'speed') speedUpgradeLevel++;
+            playSound('hit'); 
+            saveGameData();
+            
+            player.hp = BASE_MAX_HP + hpUpgradeLevel;
+            player.speed = BASE_SPEED + (speedUpgradeLevel * 0.2);
+            
+            openGarageMenu(type); 
+            updateUI();
+        }
+    }
+
+    function showClearMenu() {
+        gameState = "intermission";
+        const overlay = document.getElementById('overlay');
+        overlay.style.display = "flex";
+        
+        saveGameData(); 
+
+        if (currentStage >= MAX_STAGES) {
+            gameClearedAll = true;
+            overlay.innerHTML = `
+                <div class="menu-title" style="color:#ff00ff; text-shadow: 0 0 20px #ff00ff;">ALL MISSIONS COMPLETE!!</div>
+                <div style="color:#fff; margin-bottom:30px; font-family:monospace;">Congratulations! Stage Select unlocked.</div>
+                <button class="menu-btn" onclick="showStageSelect()">STAGE SELECT</button>
+                <button class="menu-btn" onclick="showTitleMenu()">QUIT TO TITLE</button>
+            `;
+        } else {
+            overlay.innerHTML = `
+                <div class="menu-title">MISSION ${currentStage} CLEARED</div>
+                <button class="menu-btn" onclick="nextStage()">NEXT MISSION</button>
+                <button class="menu-btn" onclick="enterGarage()">ENTER GARAGE</button>
+                <button class="menu-btn" onclick="showTitleMenu()">QUIT TO TITLE</button>
+            `;
+        }
+    }
+
+    function showStageSelect() {
+        const overlay = document.getElementById('overlay');
+        overlay.style.display = "flex";
+        let buttonsHtml = '';
+        for(let i=1; i<=MAX_STAGES; i++) {
+            let isLocked = i > maxUnlockedStage;
+            let lockedAttr = isLocked ? "disabled" : "";
+            buttonsHtml += `<button class="stage-btn" ${lockedAttr} onclick="startSpecificStage(${i})">${i}</button>`;
+        }
+        overlay.innerHTML = `
+            <div class="menu-title" style="font-size: 32px;">STAGE SELECT</div>
+            <div id="stage-grid">${buttonsHtml}</div>
+            <button class="menu-btn" style="margin-top:30px;" onclick="showTitleMenu()">BACK</button>
+        `;
+    }
+
+    function nextStage() {
+        document.getElementById('overlay').style.display = "none";
+        currentStage++;
+        initGame();
+    }
+
+    function startSpecificStage(stageNum) {
+        document.getElementById('overlay').style.display = "none";
+        currentStage = stageNum;
+        initGame();
+    }
+
+    function startChargeSound() {
+        if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+        stopChargeSound(); 
+        
+        activeChargeGain = audioCtx.createGain();
+        activeChargeGain.connect(audioCtx.destination);
+        
+        const now = audioCtx.currentTime;
+        const durSec = CHARGE_MAX / 1000;
+
+        activeChargeOscLow = audioCtx.createOscillator();
+        activeChargeOscLow.type = 'sine';
+        activeChargeOscLow.frequency.setValueAtTime(100, now);
+        activeChargeOscLow.frequency.exponentialRampToValueAtTime(800, now + durSec);
+
+        activeChargeOscHigh = audioCtx.createOscillator();
+        activeChargeOscHigh.type = 'triangle';
+        activeChargeOscHigh.frequency.setValueAtTime(102, now);
+        activeChargeOscHigh.frequency.exponentialRampToValueAtTime(816, now + durSec);
+
+        activeChargeOscLow.connect(activeChargeGain);
+        activeChargeOscHigh.connect(activeChargeGain);
+        
+        activeChargeOscLow.start();
+        activeChargeOscHigh.start();
+        
+        activeChargeGain.gain.setValueAtTime(0.0001, now);
+        activeChargeGain.gain.exponentialRampToValueAtTime(0.06, now + 0.1);
+    }
+
+    function stopChargeSound() {
+        if (activeChargeGain && audioCtx) {
+            const now = audioCtx.currentTime;
+            activeChargeGain.gain.cancelScheduledValues(now);
+            activeChargeGain.gain.setValueAtTime(activeChargeGain.gain.value, now);
+            activeChargeGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.1); 
+        }
+        if (activeChargeOscLow && audioCtx) { activeChargeOscLow.stop(audioCtx.currentTime + 0.1); activeChargeOscLow = null; }
+        if (activeChargeOscHigh && audioCtx) { activeChargeOscHigh.stop(audioCtx.currentTime + 0.1); activeChargeOscHigh = null; }
+    }
+
+    function playSound(type, pitch = 1.0) {
+        try {
+            if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            
+            const gainNode = audioCtx.createGain();
+            gainNode.connect(audioCtx.destination);
+            const now = audioCtx.currentTime;
+
+            if (type === 'bounce') {
+                const osc = audioCtx.createOscillator();
+                osc.connect(gainNode);
+                osc.type = 'sine'; 
+                osc.frequency.setValueAtTime(2400, now);
+                osc.frequency.exponentialRampToValueAtTime(1200, now + 0.04);
+                gainNode.gain.setValueAtTime(0.15, now);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.04);
+                osc.start(); osc.stop(now + 0.04);
+            } else if (type === 'fire') {
+                const osc = audioCtx.createOscillator();
+                osc.connect(gainNode);
+                osc.type = 'sawtooth'; osc.frequency.setValueAtTime(240, now);
+                osc.frequency.exponentialRampToValueAtTime(70, now + 0.1);
+                gainNode.gain.setValueAtTime(0.05, now);
+                osc.start(); osc.stop(now + 0.1);
+            } else if (type === 'skill_fire') {
+                const osc = audioCtx.createOscillator();
+                osc.connect(gainNode);
+                osc.type = 'square'; osc.frequency.setValueAtTime(600, now);
+                osc.frequency.exponentialRampToValueAtTime(150, now + 0.15);
+                gainNode.gain.setValueAtTime(0.1, now);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.15);
+                osc.start(); osc.stop(now + 0.15);
+            } else if (type === 'charge_fire') {
+                function playLaser(time, freq, vol) {
+                    const osc = audioCtx.createOscillator();
+                    const oscGain = audioCtx.createGain();
+                    osc.connect(oscGain);
+                    oscGain.connect(gainNode);
+                    osc.type = 'square';
+                    osc.frequency.setValueAtTime(freq * pitch, now + time);
+                    osc.frequency.exponentialRampToValueAtTime(30 * pitch, now + time + 0.15); 
+                    oscGain.gain.setValueAtTime(0.0001, now + time);
+                    oscGain.gain.linearRampToValueAtTime(vol, now + time + 0.01);
+                    oscGain.gain.exponentialRampToValueAtTime(0.0001, now + time + 0.3); 
+                    osc.start(now + time); osc.stop(now + time + 0.3);
+                }
+                playLaser(0, 800, 0.4); 
+                playLaser(0.03, 600, 0.2); 
+                playLaser(0.06, 400, 0.1); 
+            } else if (type === 'ult_start') {
+                const osc = audioCtx.createOscillator();
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(150, now);
+                osc.frequency.exponentialRampToValueAtTime(4000, now + 0.8);
+                gainNode.gain.setValueAtTime(0.4, now);
+                gainNode.gain.linearRampToValueAtTime(0.001, now + 0.8);
+                osc.connect(gainNode);
+                osc.start(); osc.stop(now + 0.8);
+            } else if (type === 'hit') {
+                const osc = audioCtx.createOscillator();
+                osc.connect(gainNode);
+                osc.type = 'square'; osc.frequency.setValueAtTime(120, now);
+                osc.frequency.linearRampToValueAtTime(40, now + 0.08);
+                gainNode.gain.setValueAtTime(0.08, now);
+                osc.start(); osc.stop(now + 0.08);
+            } else if (type === 'kill') {
+                const osc1 = audioCtx.createOscillator(); 
+                const osc2 = audioCtx.createOscillator(); 
+                const osc3 = audioCtx.createOscillator(); 
+                const subBass = audioCtx.createOscillator(); 
+                
+                osc1.type = 'triangle'; osc2.type = 'sine'; osc3.type = 'square'; subBass.type = 'sine';
+                
+                osc1.frequency.setValueAtTime(6500, now);
+                osc1.frequency.exponentialRampToValueAtTime(700, now + 0.12);
+                osc2.frequency.setValueAtTime(3200, now);
+                osc2.frequency.exponentialRampToValueAtTime(1200, now + 0.5); 
+                osc3.frequency.setValueAtTime(9000, now);
+                osc3.frequency.exponentialRampToValueAtTime(1500, now + 0.18);
+
+                subBass.frequency.setValueAtTime(90, now);
+                subBass.frequency.linearRampToValueAtTime(20, now + 0.25);
+                
+                gainNode.gain.setValueAtTime(0.8, now); 
+                gainNode.gain.exponentialRampToValueAtTime(0.001, now + 0.5); 
+                
+                osc1.connect(gainNode); osc2.connect(gainNode); osc3.connect(gainNode); subBass.connect(gainNode);
+                osc1.start(); osc1.stop(now + 0.5);
+                osc2.start(); osc2.stop(now + 0.5);
+                osc3.start(); osc3.stop(now + 0.5);
+                subBass.start(); subBass.stop(now + 0.5);
+
+                const bufferSize = Math.floor(audioCtx.sampleRate * 0.12);
+                const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+                const data = buffer.getChannelData(0);
+                for (let i = 0; i < bufferSize; i++) { data[i] = Math.random() * 2 - 1; }
+                const noise = audioCtx.createBufferSource();
+                noise.buffer = buffer;
+                const noiseGain = audioCtx.createGain();
+                noiseGain.gain.setValueAtTime(0.4, now);
+                noiseGain.gain.exponentialRampToValueAtTime(0.01, now + 0.12);
+                noise.connect(noiseGain); noiseGain.connect(gainNode);
+                noise.start();
+            } else if (type === 'charge_done') {
+                const osc = audioCtx.createOscillator();
+                osc.type = 'sine';
+                let baseFreq = 1400 * pitch;
+                osc.frequency.setValueAtTime(baseFreq, now);
+                gainNode.gain.setValueAtTime(0.12, now);
+                gainNode.gain.setValueAtTime(0.0001, now + 0.04);
+                
+                osc.frequency.setValueAtTime(baseFreq * 1.02, now + 0.05);
+                gainNode.gain.setValueAtTime(0.12, now + 0.05);
+                gainNode.gain.exponentialRampToValueAtTime(0.0001, now + 0.12);
+                
+                osc.connect(gainNode);
+                osc.start(); osc.stop(now + 0.12);
+            } else if (type === 'countdown') {
+                const osc = audioCtx.createOscillator();
+                osc.connect(gainNode);
+                osc.type = 'square'; osc.frequency.setValueAtTime(800, now);
+                gainNode.gain.setValueAtTime(0.05, now);
+                osc.start(); osc.stop(now + 0.1);
+            } else if (type === 'start') {
+                const osc = audioCtx.createOscillator();
+                osc.connect(gainNode);
+                osc.type = 'square'; osc.frequency.setValueAtTime(1200, now);
+                gainNode.gain.setValueAtTime(0.08, now);
+                osc.start(); osc.stop(now + 0.3);
+            } else if (type === 'warning') {
+                const osc = audioCtx.createOscillator();
+                osc.connect(gainNode);
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(2000, now);
+                osc.frequency.exponentialRampToValueAtTime(3000, now + 0.15);
+                gainNode.gain.setValueAtTime(0.15, now);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.15);
+                osc.start(); osc.stop(now + 0.15);
+            }
+        } catch (e) {}
+    }
+
+    class Particle {
+        constructor(x, y, color) {
+            this.x = x; this.y = y;
+            let angle = Math.random() * Math.PI * 2;
+            let speed = Math.random() * 5 + 2; 
+            this.vx = Math.cos(angle) * speed;
+            this.vy = Math.sin(angle) * speed;
+            this.color = color;
+            this.life = 1.0;
+            this.decay = Math.random() * 0.04 + 0.02; 
+            this.size = Math.random() * 4 + 2;
+        }
+        update() {
+            this.x += this.vx; 
+            this.y += this.vy;
+            this.life -= this.decay;
+            this.vx *= 0.95;
+            this.vy *= 0.95;
+        }
+        draw(ctx) {
+            ctx.save();
+            ctx.globalAlpha = Math.max(0, this.life);
+            ctx.fillStyle = this.color;
+            ctx.shadowBlur = 15;
+            ctx.shadowColor = this.color;
+            ctx.globalCompositeOperation = "lighter"; 
+            ctx.beginPath();
+            ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.restore();
+        }
+    }
+
+    function createExplosion(x, y, color) {
+        for (let i = 0; i < 30; i++) {
+            particles.push(new Particle(x, y, color));
+        }
+    }
+
+    class FloatingText {
+        constructor(x, y, text, color) {
+            this.x = x; this.y = y;
+            this.text = text;
+            this.color = color;
+            this.life = 1.0;
+            this.vy = -1.5;
+        }
+        update() {
+            this.y += this.vy;
+            this.life -= 0.02;
+        }
+        draw(ctx) {
+            ctx.save();
+            ctx.globalAlpha = Math.max(0, this.life);
+            ctx.fillStyle = this.color;
+            ctx.font = "bold 20px monospace";
+            ctx.shadowBlur = 10;
+            ctx.shadowColor = this.color;
+            ctx.fillText(this.text, this.x, this.y);
+            ctx.restore();
+        }
+    }
+
+    class Tank {
+        constructor(cx, cy, color, type = 'player') {
+            this.cx = cx; this.cy = cy; this.color = color; this.type = type; 
+            this.angle = 0;
+            this.lastShot = 0; 
+            
+            if (type === 'player') {
+                this.hp = BASE_MAX_HP + hpUpgradeLevel;
+                this.speed = BASE_SPEED + (speedUpgradeLevel * 0.2); 
+                this.lastSkillTime = 0; 
+                this.lastUltTime = 0; 
+            }
+            else if (type === 'red' || type === 'green' || type === 'purple') {
+                this.hp = 2; 
+                this.speed = type === 'red' ? 1.6 : 0;
+            }
+            else if (type === 'ally') {
+                this.hp = 10;
+                this.speed = 2.0; 
+            }
+            else {
+                this.hp = 1;
+                this.speed = 0;
+            }
+
+            this.aiDx = 0; this.aiDy = 0;
+            this.isLocking = false;
+            this.lockStartTime = 0;
+
+            this.updatePixelPosition();
+            this.radius = CELL_SIZE * 0.32;
+            if (this.type === 'ally') this.radius = CELL_SIZE * 0.32;
+        }
+
+        updatePixelPosition() {
+            this.x = (this.cx + 0.5) * CELL_SIZE + offsetX;
+            this.y = (this.cy + 0.5) * CELL_SIZE + offsetY;
+            this.radius = CELL_SIZE * 0.32;
+        }
+
+        draw() {
+            ctx.save();
+            ctx.translate(this.x, this.y);
+            ctx.shadowBlur = 10; ctx.shadowColor = this.color;
+
+            ctx.strokeStyle = this.color; ctx.lineWidth = 2.5;
+            if (this.type === 'player') ctx.fillStyle = "rgba(0, 255, 204, 0.2)";
+            else if (this.type === 'ally') ctx.fillStyle = "rgba(0, 255, 204, 0.4)"; 
+            else if (this.type === 'red') ctx.fillStyle = "rgba(255, 0, 50, 0.2)";
+            else if (this.type === 'green') ctx.fillStyle = "rgba(0, 255, 50, 0.2)"; 
+            else if (this.type === 'purple') ctx.fillStyle = "rgba(180, 0, 255, 0.2)"; 
+            else ctx.fillStyle = "rgba(200, 100, 30, 0.3)"; 
+
+            ctx.fillRect(-this.radius, -this.radius, this.radius * 2, this.radius * 2);
+            ctx.strokeRect(-this.radius, -this.radius, this.radius * 2, this.radius * 2);
+
+            ctx.rotate(this.angle);
+            ctx.fillStyle = "#fff";
+            ctx.fillRect(0, -2.5, this.radius * 1.4, 5);
+            ctx.restore();
+            ctx.shadowBlur = 0;
+
+            if (this.hp > 0 && (this.type === 'player' || this.type === 'ally' || this.type === 'red' || this.type === 'green' || this.type === 'purple')) {
+                let maxHp = (this.type === 'player') ? (BASE_MAX_HP + hpUpgradeLevel) : (this.type === 'ally' ? 10 : 2);
+                let barWidth = 24;
+                ctx.fillStyle = "#ff0000"; 
+                ctx.fillRect(this.x - 12, this.y - this.radius - 12, barWidth, 4);
+                ctx.fillStyle = "#00ff00"; 
+                ctx.fillRect(this.x - 12, this.y - this.radius - 12, barWidth * (this.hp / maxHp), 4);
+            }
+
+            if (this.type === 'purple' && this.isLocking) {
+                ctx.save();
+                ctx.strokeStyle = "rgba(255, 0, 0, 0.6)";
+                ctx.setLineDash([10, 10]);
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.moveTo(this.x, this.y);
+                ctx.lineTo(player.x, player.y);
+                ctx.stroke();
+                ctx.restore();
+            }
+        }
+        
+        move(dx, dy) {
+            if (this.speed === 0) return; 
+            let nextX = this.x + dx;
+            let nextY = this.y + dy;
+
+            if (!checkWallCollision(nextX, this.y, this.radius * 0.85) && !checkTankCollision(nextX, this.y, this.radius * 0.85, this)) {
+                this.x = nextX;
+            } else if (this.type === 'ally') {
+                this.aiDx *= -1; 
+            }
+            
+            if (!checkWallCollision(this.x, nextY, this.radius * 0.85) && !checkTankCollision(this.x, nextY, this.radius * 0.85, this)) {
+                this.y = nextY;
+            } else if (this.type === 'ally') {
+                this.aiDy *= -1; 
+            }
+            
+            this.cx = (this.x - offsetX) / CELL_SIZE - 0.5;
+            this.cy = (this.y - offsetY) / CELL_SIZE - 0.5;
+        }
+    }
+
+    function checkTankCollision(x, y, radius, self) {
+        if (player && player !== self && player.hp > 0) {
+            if (Math.hypot(x - player.x, y - player.y) < (radius + player.radius * 0.6)) return true;
+        }
+        for (let e of enemies) {
+            if (e !== self && e.hp > 0) {
+                if (Math.hypot(x - e.x, y - e.y) < (radius + e.radius * 0.6)) return true;
+            }
+        }
+        for (let a of allies) {
+            if (a !== self && a.hp > 0) {
+                if (Math.hypot(x - a.x, y - a.y) < (radius + a.radius * 0.6)) return true;
+            }
+        }
+        return false;
+    }
+
+    class Bullet {
+        constructor(x, y, angle, owner, laserLevel = 0, maxBounce = 1, isSkill = false) {
+            this.x = x; this.y = y; this.owner = owner; 
+            this.laserLevel = laserLevel;
+            this.isCharged = laserLevel > 0;
+            this.isSkill = isSkill; 
+            
+            let speed;
+            if (this.laserLevel === 3) speed = 150.0;
+            else if (this.laserLevel === 2) speed = 120.0; 
+            else if (this.laserLevel === 1) speed = 80.0; 
+            else speed = (owner === 'player' || owner === 'ally') ? (isSkill ? 12.0 : 7.0) : 4.5; 
+            
+            this.vx = Math.cos(angle) * speed;
+            this.vy = Math.sin(angle) * speed;
+            
+            if (this.laserLevel === 3) this.radius = 6;
+            else if (this.laserLevel === 2) this.radius = 4;
+            else if (this.laserLevel === 1) this.radius = 2;
+            else this.radius = isSkill ? 10 : 8; 
+            
+            this.bounceCount = 0;
+            if (this.laserLevel === 3) this.maxBounce = 3;
+            else if (this.laserLevel === 2) this.maxBounce = 1;
+            else if (this.laserLevel === 1) this.maxBounce = 0;
+            else this.maxBounce = maxBounce; 
+
+            this.toRemove = false;
+            this.history = [];
+            
+            if (this.laserLevel === 3) this.historyMaxLength = 100;
+            else if (this.laserLevel === 2) this.historyMaxLength = 80;
+            else if (this.laserLevel === 1) this.historyMaxLength = 50;
+            else this.historyMaxLength = isSkill ? 15 : 0; 
+            
+            this.hitTargets = new Set();
+            this.lastX = x;
+            this.lastY = y;
+
+            this.fading = false;
+            this.fadeStart = 0;
+            this.fadeDuration = 500; 
+            
+            if (this.isCharged) {
+                if (this.laserLevel === 3) this.glowColor = "rgba(255, 0, 255, ";
+                else if (this.laserLevel === 2) this.glowColor = "rgba(0, 255, 0, ";
+                else this.glowColor = this.owner === 'enemy' ? "rgba(255, 0, 136, " : "rgba(0, 255, 255, ";
+            } else {
+                if (this.isSkill) this.glowColor = "rgba(0, 136, 255, ";
+                else if (this.maxBounce > 1) this.glowColor = "rgba(0, 255, 170, ";
+                else this.glowColor = (this.owner === 'player' || this.owner === 'ally') ? "rgba(255, 170, 0, " : "rgba(255, 0, 85, ";
+            }
+        }
+        update() {
+            if (this.fading) {
+                if (Date.now() - this.fadeStart > this.fadeDuration) this.toRemove = true;
+                return;
+            }
+
+            this.lastX = this.x;
+            this.lastY = this.y;
+
+            if (this.isCharged || this.isSkill) {
+                this.history.unshift({x: this.x, y: this.y});
+                if (this.history.length > this.historyMaxLength) this.history.pop();
+            }
+
+            let speed = Math.hypot(this.vx, this.vy);
+            let steps = Math.max(1, Math.ceil(speed / 2)); 
+            let stepVx = this.vx / steps;
+            let stepVy = this.vy / steps;
+            
+            let currentX = this.x;
+            let currentY = this.y;
+            let bouncedThisFrame = false;
+            let hitRadius = this.isCharged ? 0.5 : this.radius * 0.8;
+            let wallHit = false;
+
+            for (let i = 0; i < steps; i++) {
+                let nextX = currentX + stepVx;
+                if (checkWallCollision(nextX, currentY, hitRadius)) {
+                    if (this.bounceCount >= this.maxBounce) { wallHit = true; break; }
+                    this.vx *= -1; stepVx *= -1; this.bounceCount++; bouncedThisFrame = true;
+                    nextX = currentX + stepVx;
+                }
+                currentX = nextX;
+
+                let nextY = currentY + stepVy;
+                if (checkWallCollision(currentX, nextY, hitRadius)) {
+                    if (this.bounceCount >= this.maxBounce) { wallHit = true; break; }
+                    this.vy *= -1; stepVy *= -1; this.bounceCount++; bouncedThisFrame = true;
+                    nextY = currentY + stepVy;
+                }
+                currentY = nextY;
+                
+                if (this.isCharged && i % 2 === 0) {
+                    this.history.unshift({x: currentX, y: currentY});
+                }
+            }
+
+            if (wallHit) {
+                this.x = currentX; this.y = currentY;
+                if (this.isCharged) { this.fading = true; this.fadeStart = Date.now(); } else { this.toRemove = true; }
+                return;
+            }
+
+            if (bouncedThisFrame) playSound('bounce');
+            this.x = currentX; this.y = currentY;
+        }
+        draw() {
+            ctx.save();
+            
+            let fadeRatio = 1.0;
+            if (this.fading) {
+                fadeRatio = Math.max(0, 1.0 - (Date.now() - this.fadeStart) / this.fadeDuration);
+                ctx.globalAlpha = fadeRatio;
+            }
+            
+            ctx.globalCompositeOperation = "lighter";
+            let gradRadius = this.isCharged ? this.radius * 6 : this.radius * 4;
+            if (this.history.length > 0 || !this.isCharged) {
+                let gx = (this.isCharged || this.isSkill) && this.history.length > 0 ? this.history[0].x : this.x;
+                let gy = (this.isCharged || this.isSkill) && this.history.length > 0 ? this.history[0].y : this.y;
+                let grad = ctx.createRadialGradient(gx, gy, 0, gx, gy, gradRadius);
+                grad.addColorStop(0, this.glowColor + (0.6 * fadeRatio) + ")");
+                grad.addColorStop(1, "transparent");
+                ctx.fillStyle = grad;
+                ctx.beginPath(); ctx.arc(gx, gy, gradRadius, 0, Math.PI*2); ctx.fill();
+            }
+
+            if (this.isCharged || this.isSkill) {
+                if (this.history.length > 1) {
+                    ctx.lineCap = "round";
+                    ctx.lineJoin = "round";
+                    ctx.beginPath(); 
+                    ctx.moveTo(this.history[0].x, this.history[0].y);
+                    for (let p of this.history) ctx.lineTo(p.x, p.y);
+
+                    let baseWidth = 0;
+                    if (this.laserLevel === 3) {
+                        ctx.shadowBlur = 25 * fadeRatio; ctx.shadowColor = "#ff00ff"; 
+                        ctx.strokeStyle = "rgba(255, 0, 255, 0.9)"; baseWidth = 14;
+                    } else if (this.laserLevel === 2) {
+                        ctx.shadowBlur = 20 * fadeRatio; ctx.shadowColor = "#00ff00"; 
+                        ctx.strokeStyle = "rgba(0, 255, 0, 0.8)"; baseWidth = 8;
+                    } else if (this.laserLevel === 1) {
+                        if (this.owner === 'enemy') {
+                            ctx.shadowBlur = 15 * fadeRatio; ctx.shadowColor = "#ff0088"; 
+                            ctx.strokeStyle = "rgba(255, 0, 136, 0.8)"; baseWidth = 4;
+                        } else {
+                            ctx.shadowBlur = 15 * fadeRatio; ctx.shadowColor = "#00ffff"; 
+                            ctx.strokeStyle = "rgba(0, 255, 255, 0.8)"; baseWidth = 4;
+                        }
+                    } else if (this.isSkill) {
+                        ctx.shadowBlur = 15 * fadeRatio; ctx.shadowColor = "#0088ff"; 
+                        ctx.strokeStyle = "rgba(0, 136, 255, 0.8)"; baseWidth = 8;
+                    }
+                    ctx.lineWidth = baseWidth * fadeRatio; 
+                    ctx.stroke();
+
+                    ctx.shadowBlur = 0;
+                    ctx.strokeStyle = "#ffffff";
+                    let coreWidth = this.laserLevel === 3 ? 5 : (this.laserLevel === 2 ? 3 : (this.isSkill ? 3 : 1.5));
+                    ctx.lineWidth = coreWidth * fadeRatio;
+                    ctx.stroke();
+                }
+            } else {
+                ctx.translate(this.x, this.y);
+                ctx.rotate(Math.atan2(this.vy, this.vx)); 
+                ctx.shadowBlur = 15;
+                
+                if (this.maxBounce > 1) { ctx.shadowColor = "#00ffaa"; ctx.fillStyle = "#55ffcc"; }
+                else { ctx.shadowColor = (this.owner === 'player' || this.owner === 'ally') ? "#ffaa00" : "#ff0055"; ctx.fillStyle = (this.owner === 'player' || this.owner === 'ally') ? "#ffbb00" : "#ff3366"; }
+                
+                let w = this.radius * 2.5; 
+                let h = this.radius * 1.2; 
+                
+                ctx.beginPath();
+                ctx.moveTo(-w/2, -h/2);
+                ctx.lineTo(w/4, -h/2);
+                ctx.arc(w/4, 0, h/2, -Math.PI/2, Math.PI/2);
+                ctx.lineTo(-w/2, h/2);
+                ctx.closePath();
+                ctx.fill();
+            }
+            ctx.restore();
+        }
+    }
+
+    function distToSegment(px, py, x1, y1, x2, y2) {
+        let l2 = (x2 - x1) ** 2 + (y2 - y1) ** 2;
+        if (l2 === 0) return Math.hypot(px - x1, py - y1);
+        let t = ((px - x1) * (x2 - x1) + (py - y1) * (y2 - y1)) / l2;
+        t = Math.max(0, Math.min(1, t));
+        return Math.hypot(px - (x1 + t * (x2 - x1)), py - (y1 + t * (y2 - y1)));
+    }
+
+    function checkWallCollision(x, y, radius) {
+        if (x - radius < offsetX || x + radius > COLS * CELL_SIZE + offsetX ||
+            y - radius < offsetY || y + radius > ROWS * CELL_SIZE + offsetY) return true;
+        
+        for (let r = 0; r < ROWS; r++) {
+            for (let c = 0; c < COLS; c++) {
+                if (grid[r] && grid[r][c] === 1) {
+                    let wX = c * CELL_SIZE + offsetX;
+                    let wY = r * CELL_SIZE + offsetY;
+                    let closestX = Math.max(wX, Math.min(x, wX + CELL_SIZE));
+                    let closestY = Math.max(wY, Math.min(y, wY + CELL_SIZE));
+                    if (((x - closestX)**2 + (y - closestY)**2) < radius**2) return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    function hasLineOfSight(x1, y1, x2, y2) {
+        let dist = Math.hypot(x2 - x1, y2 - y1);
+        let steps = Math.ceil(dist / 5); 
+        for(let i=1; i<=steps; i++) {
+            let cx = x1 + (x2 - x1) * (i / steps);
+            let cy = y1 + (y2 - y1) * (i / steps);
+            if(checkWallCollision(cx, cy, 2)) return false; 
+        }
+        return true;
+    }
+
+    function buildStageMap(stageNum) {
+        grid = Array(ROWS).fill().map(() => Array(COLS).fill(0));
+        for (let c = 0; c < COLS; c++) { grid[0][c] = 1; grid[ROWS-1][c] = 1; }
+        for (let r = 0; r < ROWS; r++) { grid[r][0] = 1; grid[r][COLS-1] = 1; }
+
+        if (stageNum === 1) {
+            for(let r=3; r<=10; r++) grid[r][9] = 1;
+            grid[3][8] = 1; grid[10][10] = 1;
+            player = new Tank(15, 6, "#00ffcc", 'player');
+            enemies = [new Tank(3, 3, "#cd7f32", 'brown'), new Tank(4, 9, "#ff3333", 'red')];
+        } 
+        else if (stageNum === 2) {
+            for(let r=4; r<=9; r++) grid[r][13] = 1;
+            grid[4][14] = 1; grid[9][14] = 1;
+            player = new Tank(16, 6, "#00ffcc", 'player');
+            enemies = [new Tank(2, 3, "#cd7f32", 'brown'), new Tank(3, 10, "#ff3333", 'red'), new Tank(8, 4, "#ff3333", 'red')];
+        } 
+        else if (stageNum === 3) {
+            for(let c=4; c<=15; c++) { grid[6][c] = 1; } 
+            player = new Tank(10, 10, "#00ffcc", 'player');
+            enemies = [new Tank(3, 3, "#00ff00", 'green'), new Tank(16, 3, "#cd7f32", 'brown'), new Tank(10, 2, "#ff3333", 'red')];
+        }
+        else if (stageNum === 4) {
+            for(let r=3; r<=10; r+=4) {
+                for(let c=4; c<=15; c+=5) { grid[r][c]=1; grid[r+1][c]=1; grid[r][c+1]=1; grid[r+1][c+1]=1; }
+            }
+            player = new Tank(10, 11, "#00ffcc", 'player');
+            enemies = [new Tank(2, 2, "#00ff00", 'green'), new Tank(17, 2, "#00ff00", 'green'), new Tank(2, 11, "#ff3333", 'red'), new Tank(17, 11, "#ff3333", 'red')];
+        }
+        else if (stageNum === 5) {
+            for(let r=2; r<=11; r++) { grid[r][6]=1; grid[r][13]=1; }
+            grid[6][6]=0; grid[7][6]=0; grid[6][13]=0; grid[7][13]=0;
+            player = new Tank(10, 11, "#00ffcc", 'player');
+            enemies = [new Tank(3, 2, "#cd7f32", 'brown'), new Tank(16, 2, "#cd7f32", 'brown'), new Tank(3, 10, "#00ff00", 'green'), new Tank(16, 10, "#00ff00", 'green'), new Tank(9, 3, "#ff3333", 'red'), new Tank(2, 6, "#ff3333", 'red'), new Tank(17, 6, "#ff3333", 'red')];
+        }
+        else if (stageNum === 6) {
+            for(let c=3; c<=16; c+=4) {
+                for(let r=2; r<=11; r+=3) { grid[r][c]=1; grid[r][c+1]=1; }
+            }
+            player = new Tank(10, 6, "#00ffcc", 'player');
+            enemies = [new Tank(1, 1, "#ff3333", 'red'), new Tank(18, 1, "#ff3333", 'red'), new Tank(1, 12, "#cd7f32", 'brown'), new Tank(18, 12, "#00ff00", 'green')];
+        }
+        else if (stageNum === 7) {
+            for(let c=3; c<=16; c++) { grid[5][c]=1; grid[8][c]=1; }
+            grid[5][10]=0; grid[8][10]=0; 
+            player = new Tank(10, 12, "#00ffcc", 'player');
+            enemies = [new Tank(1, 1, "#00ff00", 'green'), new Tank(18, 1, "#00ff00", 'green'), new Tank(10, 2, "#cd7f32", 'brown')];
+        }
+        else if (stageNum === 8) {
+            [4, 15].forEach(c => { [3, 4, 9, 10].forEach(r => grid[r][c]=1); });
+            [6, 13].forEach(c => { [6, 7].forEach(r => grid[r][c]=1); });
+            player = new Tank(10, 12, "#00ffcc", 'player');
+            enemies = [new Tank(1, 1, "#cd7f32", 'brown'), new Tank(18, 1, "#cd7f32", 'brown'), new Tank(1, 12, "#ff3333", 'red'), new Tank(18, 12, "#ff3333", 'red'), new Tank(10, 2, "#00ff00", 'green')];
+        }
+        else if (stageNum === 9) {
+            for(let i=2; i<18; i+=2) {
+                if(i%4 === 0) { grid[4][i]=1; grid[9][i]=1; }
+                else { grid[6][i]=1; grid[7][i]=1; }
+            }
+            player = new Tank(10, 12, "#00ffcc", 'player');
+            enemies = [new Tank(1, 1, "#00ff00", 'green'), new Tank(18, 1, "#00ff00", 'green'), new Tank(1, 11, "#ff3333", 'red'), new Tank(18, 11, "#ff3333", 'red'), new Tank(10, 2, "#cd7f32", 'brown')];
+        }
+        else if (stageNum === 10) {
+            for(let r=2; r<=11; r++) { grid[r][2]=1; grid[r][17]=1; }
+            for(let c=2; c<=17; c++) { grid[2][c]=1; grid[11][c]=1; }
+            for(let r=4; r<=9; r++) { grid[r][2]=0; grid[r][17]=0; }
+            for(let c=6; c<=13; c++) { grid[2][c]=0; grid[11][c]=0; }
+            grid[6][6]=1; grid[6][13]=1; grid[7][6]=1; grid[7][13]=1;
+            player = new Tank(10, 6, "#00ffcc", 'player');
+            enemies = [new Tank(5, 5, "#ff3333", 'red'), new Tank(14, 5, "#ff3333", 'red'), new Tank(5, 8, "#ff3333", 'red'), new Tank(14, 8, "#ff3333", 'red'), new Tank(10, 4, "#00ff00", 'green'), new Tank(10, 9, "#00ff00", 'green'), new Tank(1, 1, "#cd7f32", 'brown'), new Tank(18, 1, "#cd7f32", 'brown')];
+        }
+        else if (stageNum === 11) {
+            for(let r=3; r<=10; r++) { grid[r][6]=1; grid[r][13]=1; }
+            grid[6][6]=0; grid[7][6]=0; grid[6][13]=0; grid[7][13]=0;
+            player = new Tank(10, 11, "#00ffcc", 'player');
+            enemies = [new Tank(2, 2, "#b400ff", 'purple'), new Tank(17, 2, "#b400ff", 'purple')];
+        }
+        else if (stageNum === 12) {
+            for(let c=2; c<=17; c+=3) { grid[5][c]=1; grid[8][c]=1; }
+            player = new Tank(10, 6, "#00ffcc", 'player');
+            enemies = [new Tank(1, 1, "#b400ff", 'purple'), new Tank(18, 1, "#b400ff", 'purple'), new Tank(1, 12, "#b400ff", 'purple'), new Tank(18, 12, "#b400ff", 'purple')];
+        }
+        else if (stageNum === 13) {
+            for(let r=2; r<=11; r+=2) { grid[r][4]=1; grid[r][15]=1; }
+            player = new Tank(10, 12, "#00ffcc", 'player');
+            enemies = [new Tank(1, 2, "#ff3333", 'red'), new Tank(18, 2, "#ff3333", 'red'), new Tank(10, 2, "#b400ff", 'purple'), new Tank(10, 6, "#00ff00", 'green')];
+        }
+        else if (stageNum === 14) {
+            for(let c=4; c<=15; c++) { grid[3][c]=1; grid[10][c]=1; }
+            grid[3][9]=0; grid[3][10]=0; grid[10][9]=0; grid[10][10]=0;
+            player = new Tank(10, 6, "#00ffcc", 'player');
+            enemies = [new Tank(2, 1, "#b400ff", 'purple'), new Tank(17, 1, "#b400ff", 'purple'), new Tank(2, 12, "#b400ff", 'purple'), new Tank(17, 12, "#b400ff", 'purple'), new Tank(10, 1, "#cd7f32", 'brown'), new Tank(10, 12, "#cd7f32", 'brown')];
+        }
+        else if (stageNum === 15) {
+            for(let c=2; c<=17; c++) { grid[2][c]=1; grid[11][c]=1; }
+            for(let r=2; r<=11; r++) { grid[r][2]=1; grid[r][17]=1; }
+            grid[2][9]=0; grid[2][10]=0; grid[11][9]=0; grid[11][10]=0;
+            grid[6][2]=0; grid[7][2]=0; grid[6][17]=0; grid[7][17]=0;
+            for(let c=6; c<=13; c++) { grid[5][c]=1; grid[8][c]=1; }
+            grid[5][9]=0; grid[5][10]=0; grid[8][9]=0; grid[8][10]=0;
+
+            player = new Tank(10, 6, "#00ffcc", 'player');
+            enemies = [new Tank(1, 1, "#b400ff", 'purple'), new Tank(18, 1, "#b400ff", 'purple'), new Tank(1, 12, "#b400ff", 'purple'), new Tank(18, 12, "#b400ff", 'purple'), new Tank(10, 1, "#00ff00", 'green'), new Tank(10, 12, "#00ff00", 'green'), new Tank(1, 6, "#ff3333", 'red'), new Tank(18, 6, "#ff3333", 'red')];
+        }
+        else if (stageNum === 16) {
+            for(let c=8; c<=11; c++) { grid[6][c]=1; grid[7][c]=1; } 
+            for(let r=4; r<=9; r++) { grid[r][9]=1; grid[r][10]=1; }
+            player = new Tank(10, 12, "#00ffcc", 'player');
+            enemies = [new Tank(2, 2, "#b400ff", 'purple'), new Tank(17, 2, "#b400ff", 'purple'), new Tank(10, 2, "#ff3333", 'red'), new Tank(2, 11, "#00ff00", 'green'), new Tank(17, 11, "#00ff00", 'green')];
+        }
+        else if (stageNum === 17) {
+            for(let i=3; i<=10; i++) { grid[i][i+2]=1; grid[i][17-i]=1; } 
+            player = new Tank(10, 12, "#00ffcc", 'player');
+            enemies = [new Tank(1, 6, "#b400ff", 'purple'), new Tank(18, 6, "#b400ff", 'purple'), new Tank(10, 2, "#b400ff", 'purple'), new Tank(1, 1, "#cd7f32", 'brown'), new Tank(18, 1, "#cd7f32", 'brown')];
+        }
+        else if (stageNum === 18) {
+            for(let r=2; r<=11; r+=3) { for(let c=2; c<=17; c+=3) { grid[r][c]=1; } } 
+            player = new Tank(10, 12, "#00ffcc", 'player');
+            enemies = [new Tank(1, 1, "#ff3333", 'red'), new Tank(18, 1, "#ff3333", 'red'), new Tank(1, 12, "#ff3333", 'red'), new Tank(18, 12, "#ff3333", 'red'), new Tank(10, 6, "#00ff00", 'green')];
+        }
+        else if (stageNum === 19) {
+            for(let c=2; c<=17; c++) { if(c!==9 && c!==10) { grid[4][c]=1; grid[9][c]=1; } }
+            for(let r=2; r<=11; r++) { if(r!==6 && r!==7) { grid[r][6]=1; grid[r][13]=1; } }
+            player = new Tank(10, 12, "#00ffcc", 'player');
+            enemies = [new Tank(10, 2, "#b400ff", 'purple'), new Tank(2, 6, "#b400ff", 'purple'), new Tank(18, 6, "#b400ff", 'purple'), new Tank(2, 2, "#ff3333", 'red'), new Tank(18, 2, "#ff3333", 'red')];
+        }
+        else if (stageNum === 20) {
+            for(let c=4; c<=15; c++) { grid[2][c]=1; grid[11][c]=1; }
+            for(let r=4; r<=9; r++) { grid[r][2]=1; grid[r][17]=1; }
+            player = new Tank(10, 6, "#00ffcc", 'player');
+            enemies = [new Tank(1, 1, "#b400ff", 'purple'), new Tank(18, 1, "#b400ff", 'purple'), new Tank(1, 12, "#b400ff", 'purple'), new Tank(18, 12, "#b400ff", 'purple'), new Tank(10, 1, "#ff3333", 'red'), new Tank(10, 12, "#ff3333", 'red'), new Tank(1, 6, "#00ff00", 'green'), new Tank(18, 6, "#00ff00", 'green')];
+        }
+    }
+
+    function initGame() {
+        document.getElementById('game-status').innerText = "";
+        
+        stopChargeSound();
+        resizeCanvas();
+        buildStageMap(currentStage);
+        
+        bullets = [];
+        particles = []; 
+        floatingTexts = [];
+        allies = []; 
+        isCharging = false; chargePercent = 0; chargeMaxReached = false;
+        
+        if (player) {
+            player.lastSkillTime = 0;
+            player.lastUltTime = 0;
+        }
+        
+        updateUI();
+
+        gameState = "countdown";
+        countdownStartTime = Date.now();
+        playSound('countdown');
+        
+        if (bgmEnabled && bgmAudio.paused) bgmAudio.play().catch(e => {});
+    }
+
+    function retryStage() { 
+        if (gameState === "title" || gameState === "garage_field" || document.getElementById('overlay').style.display === "flex") return;
+        initGame(); 
+    }
+
+    function updateUI() {
+        if (!player) return;
+        
+        document.getElementById('player-hp').innerText = player.hp;
+        document.getElementById('enemy-count').innerText = enemies.length;
+        document.getElementById('bullet-count').innerText = `${bullets.filter(b => b.owner === 'player' && b.laserLevel === 0 && !b.isSkill).length} / 5`;
+        document.getElementById('gear-count').innerText = playerGears; 
+
+        let now = Date.now();
+        
+        let elapsedSkill = now - player.lastSkillTime;
+        let skillBar = document.getElementById('skill-bar');
+        let skillText = document.getElementById('skill-text');
+        if (elapsedSkill >= SKILL_COOLDOWN) {
+            skillBar.style.width = "100%";
+            skillBar.style.background = "#0088ff";
+            skillText.innerText = "READY";
+            skillText.style.color = "#0088ff";
+        } else {
+            let pct = (elapsedSkill / SKILL_COOLDOWN) * 100;
+            skillBar.style.width = pct + "%";
+            skillBar.style.background = "#555555";
+            skillText.innerText = "COOLDOWN";
+            skillText.style.color = "#555555";
+        }
+
+        let elapsedUlt = now - player.lastUltTime;
+        let ultBar = document.getElementById('ult-bar');
+        let ultText = document.getElementById('ult-text');
+        if (elapsedUlt >= ULT_COOLDOWN) {
+            ultBar.style.width = "100%";
+            ultBar.style.background = "#ffaa00";
+            ultText.innerText = "READY";
+            ultText.style.color = "#ffaa00";
+        } else {
+            let pct = (elapsedUlt / ULT_COOLDOWN) * 100;
+            ultBar.style.width = pct + "%";
+            ultBar.style.background = "#555555";
+            ultText.innerText = "COOLDOWN";
+            ultText.style.color = "#555555";
+        }
+    }
+
+    function updateAllies() {
+        let now = Date.now();
+        allies.forEach(ally => {
+            let target = null;
+            let minDist = Infinity;
+            for (let e of enemies) {
+                if (e.hp > 0) {
+                    let d = Math.hypot(e.x - ally.x, e.y - ally.y);
+                    if (d < minDist) { minDist = d; target = e; }
+                }
+            }
+            
+            if (target) {
+                let dx = target.x - ally.x;
+                let dy = target.y - ally.y;
+                let dist = Math.hypot(dx, dy);
+                ally.angle = Math.atan2(dy, dx);
+
+                if (dist < CELL_SIZE * 5) {
+                    ally.aiDx = -Math.cos(ally.angle) * ally.speed;
+                    ally.aiDy = -Math.sin(ally.angle) * ally.speed;
+                } else if (dist > CELL_SIZE * 8) {
+                    ally.aiDx = Math.cos(ally.angle) * ally.speed;
+                    ally.aiDy = Math.sin(ally.angle) * ally.speed;
+                } else {
+                    if (Math.random() < 0.02) ally.stepDirection = Math.random() < 0.5 ? 1 : -1;
+                    let sideAngle = ally.angle + (Math.PI / 2) * (ally.stepDirection || 1);
+                    ally.aiDx = Math.cos(sideAngle) * ally.speed;
+                    ally.aiDy = Math.sin(sideAngle) * ally.speed;
+                }
+                ally.move(ally.aiDx, ally.aiDy);
+
+                if (now - ally.lastShot > 1500) {
+                    bullets.push(new Bullet(ally.x, ally.y, ally.angle, 'ally', 3, 3)); 
+                    playSound('charge_fire', 1.2); 
+                    ally.lastShot = now;
+                }
+            } else {
+                let dx = player.x - ally.x;
+                let dy = player.y - ally.y;
+                let dist = Math.hypot(dx, dy);
+                ally.angle = Math.atan2(dy, dx);
+                if (dist > CELL_SIZE * 1.5) {
+                    ally.move(Math.cos(ally.angle) * ally.speed, Math.sin(ally.angle) * ally.speed);
+                }
+            }
+        });
+    }
+
+    function updateEnemies() {
+        let now = Date.now();
+        enemies.forEach(e => {
+            let target = player;
+            if (allies.length > 0 && Math.random() < 0.3) {
+                target = allies[Math.floor(Math.random() * allies.length)];
+            }
+            if (target.hp <= 0) target = player; 
+
+            if (e.type === 'purple') {
+                if (e.isLocking) {
+                    e.angle = Math.atan2(target.y - e.y, target.x - e.x); 
+                    if (now - e.lockStartTime > 800) { 
+                        bullets.push(new Bullet(e.x, e.y, e.angle, 'enemy', 1, 0)); 
+                        playSound('charge_fire', 1.3);
+                        e.lastShot = now;
+                        e.isLocking = false;
+                    }
+                } else {
+                    if (now - e.lastShot > 3000) { 
+                        if (hasLineOfSight(e.x, e.y, target.x, target.y)) {
+                            e.isLocking = true;
+                            e.lockStartTime = now;
+                            playSound('warning'); 
+                        } else {
+                            e.angle = Math.atan2(target.y - e.y, target.x - e.x);
+                        }
+                    } else {
+                        e.angle = Math.atan2(target.y - e.y, target.x - e.x);
+                    }
+                }
+            } else {
+                let dx = target.x - e.x;
+                let dy = target.y - e.y;
+                e.angle = Math.atan2(dy, dx);
+
+                if (e.type === 'red') {
+                    if (Math.random() < 0.03 || (Math.abs(e.aiDx) < 0.1 && Math.abs(e.aiDy) < 0.1)) {
+                        let moveAngle = Math.random() * Math.PI * 2;
+                        if(Math.random() < 0.4) moveAngle = e.angle + (Math.random() - 0.5);
+                        e.aiDx = Math.cos(moveAngle) * e.speed;
+                        e.aiDy = Math.sin(moveAngle) * e.speed;
+                    }
+                    let oldX = e.x; let oldY = e.y;
+                    e.move(e.aiDx, e.aiDy);
+                    if (e.x === oldX || e.y === oldY) {
+                        let moveAngle = Math.random() * Math.PI * 2;
+                        e.aiDx = Math.cos(moveAngle) * e.speed;
+                        e.aiDy = Math.sin(moveAngle) * e.speed;
+                    }
+                }
+
+                let shootCooldown = e.type === 'red' ? 1400 : 2000;
+                if (e.type === 'green') shootCooldown = 2500; 
+
+                if (now - e.lastShot > shootCooldown && Math.random() < 0.06) {
+                    let bounce = e.type === 'green' ? 2 : 1;
+                    bullets.push(new Bullet(e.x, e.y, e.angle, 'enemy', 0, bounce));
+                    playSound('fire');
+                    e.lastShot = now;
+                }
+            }
+        });
+    }
+
+    function drawAimGuide() {
+        if (!player || player.hp <= 0) return;
+        ctx.save();
+        ctx.strokeStyle = "rgba(0, 255, 204, 0.4)";
+        ctx.lineWidth = 1.5;
+        ctx.setLineDash([5, 5]);
+        ctx.beginPath();
+        
+        let currentX = player.x;
+        let currentY = player.y;
+        ctx.moveTo(currentX, currentY);
+        
+        let angle = player.angle;
+        let vx = Math.cos(angle);
+        let vy = Math.sin(angle);
+        let step = 2; 
+        
+        let bounces = 0;
+        let maxBounces = 1; 
+        let maxDist = 800;
+        let traveled = 0;
+        
+        while(bounces <= maxBounces && traveled < maxDist) {
+            let nextX = currentX + vx * step;
+            if (checkWallCollision(nextX, currentY, 0.5)) {
+                ctx.lineTo(currentX, currentY);
+                vx *= -1; bounces++;
+                if (bounces > maxBounces) break;
+                nextX = currentX + vx * step;
+            }
+            currentX = nextX;
+
+            let nextY = currentY + vy * step;
+            if (checkWallCollision(currentX, nextY, 0.5)) {
+                ctx.lineTo(currentX, currentY);
+                vy *= -1; bounces++;
+                if (bounces > maxBounces) break;
+                nextY = currentY + vy * step;
+            }
+            currentY = nextY;
+            traveled += step;
+        }
+        ctx.lineTo(currentX, currentY);
+        ctx.stroke();
+        ctx.restore();
+        
+        ctx.save();
+        ctx.strokeStyle = "rgba(0, 255, 204, 0.8)";
+        ctx.lineWidth = 2;
+        ctx.translate(mouseX, mouseY);
+        ctx.beginPath();
+        ctx.moveTo(-12, 0); ctx.lineTo(-4, 0);
+        ctx.moveTo(12, 0); ctx.lineTo(4, 0);
+        ctx.moveTo(0, -12); ctx.lineTo(0, -4);
+        ctx.moveTo(0, 12); ctx.lineTo(0, 4);
+        ctx.stroke();
+        ctx.beginPath(); ctx.arc(0, 0, 3, 0, Math.PI*2); ctx.fill();
+        ctx.restore();
+    }
+
+    let lastCount = 3;
+
+    function gameLoop() {
+        if (gameState === "playing" || gameState === "garage_field") {
+            let moveSpeed = isCharging ? 0.9 : player.speed;
+            let dx = 0, dy = 0;
+            if (keys['w'] || keys['arrowup']) dy -= moveSpeed;
+            if (keys['s'] || keys['arrowdown']) dy += moveSpeed;
+            if (keys['a'] || keys['arrowleft']) dx -= moveSpeed;
+            if (keys['d'] || keys['arrowright']) dx += moveSpeed;
+            player.move(dx, dy);
+            player.angle = Math.atan2(mouseY - player.y, mouseX - player.x);
+            
+            let now = Date.now();
+
+            if (gameState === "playing") {
+                if (keys['shift']) {
+                    if (now - player.lastSkillTime >= SKILL_COOLDOWN) {
+                        bullets.push(new Bullet(player.x, player.y, player.angle, 'player', 0, 8, true)); 
+                        playSound('skill_fire');
+                        player.lastSkillTime = now;
+                    }
+                }
+
+                if (keys[' ']) {
+                    if (now - player.lastUltTime >= ULT_COOLDOWN) {
+                        let spawned = false;
+                        for (let dist = 1.2; dist <= 3.0; dist += 0.5) {
+                            for (let angleOffset = 0; angleOffset < Math.PI * 2; angleOffset += Math.PI / 4) {
+                                let spawnAngle = player.angle + Math.PI + angleOffset; 
+                                let spawnX = player.x + Math.cos(spawnAngle) * CELL_SIZE * dist;
+                                let spawnY = player.y + Math.sin(spawnAngle) * CELL_SIZE * dist;
+                                
+                                if (!checkWallCollision(spawnX, spawnY, CELL_SIZE * 0.4) && !checkTankCollision(spawnX, spawnY, CELL_SIZE * 0.4, null)) {
+                                    let cx = (spawnX - offsetX) / CELL_SIZE - 0.5;
+                                    let cy = (spawnY - offsetY) / CELL_SIZE - 0.5;
+                                    allies = []; 
+                                    allies.push(new Tank(cx, cy, "#00ffcc", 'ally'));
+                                    createExplosion(spawnX, spawnY, "#ffaa00");
+                                    spawned = true;
+                                    break;
+                                }
+                            }
+                            if(spawned) break;
+                        }
+
+                        if (!spawned) {
+                            let cx = (player.x - offsetX) / CELL_SIZE - 0.5;
+                            let cy = (player.y - offsetY) / CELL_SIZE - 0.5;
+                            allies = []; 
+                            allies.push(new Tank(cx, cy, "#00ffcc", 'ally'));
+                            createExplosion(player.x, player.y, "#ffaa00");
+                        }
+
+                        playSound('ult_start');
+                        player.lastUltTime = now;
+                    }
+                }
+
+                updateAllies(); 
+                updateEnemies();
+
+                if (isCharging) {
+                    let elapsed = Date.now() - chargeStartTime;
+                    chargePercent = Math.min(100, Math.floor((elapsed / CHARGE_MAX) * 100));
+                    
+                    let currentLevel = 0;
+                    let statusText = "";
+                    
+                    if (elapsed >= CHARGE_MAX) { statusText = "MAX (LV3)"; currentLevel = 3; }
+                    else if (elapsed >= CHARGE_LV2) { statusText = "READY (LV2)"; currentLevel = 2; }
+                    else if (elapsed >= CHARGE_LV1) { statusText = "READY (LV1)"; currentLevel = 1; }
+                    else statusText = chargePercent + "%";
+
+                    if (currentLevel > lastChargeLevel) {
+                        if (currentLevel === 3 && !chargeMaxReached) {
+                            stopChargeSound();
+                            playSound('charge_done', 1.2);
+                            chargeMaxReached = true;
+                        } else if (currentLevel < 3) {
+                            playSound('charge_done', 1.0 + (currentLevel - 1) * 0.1); 
+                        }
+                        lastChargeLevel = currentLevel;
+                    }
+
+                    document.getElementById('charge-text').innerText = statusText;
+                    document.getElementById('charge-bar').style.width = chargePercent + "%";
+                    document.getElementById('charge-bar-container').style.display = "block";
+                    
+                    if(elapsed >= CHARGE_MAX) document.getElementById('charge-bar').style.background = "#ff00ff"; 
+                    else if(elapsed >= CHARGE_LV2) document.getElementById('charge-bar').style.background = "#00ff00"; 
+                    else if(elapsed >= CHARGE_LV1) document.getElementById('charge-bar').style.background = "#00ffff"; 
+                    else document.getElementById('charge-bar').style.background = "#555555";
+
+                } else {
+                    document.getElementById('charge-bar-container').style.display = "none";
+                    lastChargeLevel = 0; 
+                }
+
+                bullets.forEach(b => {
+                    b.update();
+                    if (b.fading) return; 
+
+                    if (b.owner === 'enemy') {
+                        let distP = distToSegment(player.x, player.y, b.lastX, b.lastY, b.x, b.y);
+                        if (distP < player.radius + b.radius) {
+                            if (!b.hitTargets.has(player)) {
+                                b.hitTargets.add(player);
+                                player.hp--; playSound('hit'); 
+                                if(!b.isCharged) b.toRemove = true; 
+                                updateUI();
+                                if (player.hp <= 0) {
+                                    createExplosion(player.x, player.y, player.color); 
+                                    gameState = "gameover";
+                                    stopChargeSound();
+                                    document.getElementById('game-status').innerText = "MISSION FAILED...";
+                                    setTimeout(showTitleMenu, 3000);
+                                }
+                            }
+                        }
+                        allies.forEach((ally, index) => {
+                            let distA = distToSegment(ally.x, ally.y, b.lastX, b.lastY, b.x, b.y);
+                            if (distA < ally.radius + b.radius) {
+                                if (!b.hitTargets.has(ally)) {
+                                    b.hitTargets.add(ally);
+                                    ally.hp--; playSound('hit');
+                                    if(!b.isCharged) b.toRemove = true;
+                                    if(ally.hp <= 0) {
+                                        createExplosion(ally.x, ally.y, ally.color);
+                                        allies.splice(index, 1);
+                                    }
+                                }
+                            }
+                        });
+                    }
+
+                    if (b.owner === 'player' || b.owner === 'ally') {
+                        enemies.forEach((e, index) => {
+                            let hitRadius = b.isCharged ? b.radius * 3 : b.radius; 
+                            let dist = distToSegment(e.x, e.y, b.lastX, b.lastY, b.x, b.y);
+
+                            if (dist < e.radius + hitRadius) {
+                                if (!b.hitTargets.has(e)) {
+                                    b.hitTargets.add(e); 
+                                    let dmg = b.laserLevel === 3 ? 3 : (b.laserLevel === 2 ? 2 : 1);
+                                    if (b.isSkill) dmg = 2; 
+                                    
+                                    e.hp -= dmg; 
+                                    if (!b.isCharged && !b.isSkill) b.toRemove = true; 
+                                    
+                                    if (e.hp <= 0) {
+                                        playSound('kill'); 
+                                        createExplosion(e.x, e.y, e.color); 
+                                        
+                                        let earned = e.type === 'purple' ? 50 : (e.type === 'red' || e.type === 'green' ? 20 : 10);
+                                        playerGears += earned;
+                                        floatingTexts.push(new FloatingText(e.x, e.y, `+${earned} ⚙️`, "#ffaa00"));
+                                        
+                                        enemies.splice(index, 1);
+                                    } else {
+                                        playSound('hit'); 
+                                    }
+                                    updateUI();
+
+                                    if (enemies.length === 0) {
+                                        gameState = "clear";
+                                        stopChargeSound();
+                                        document.getElementById('game-status').innerText = "MISSION CLEAR!";
+                                        setTimeout(showClearMenu, 2000);
+                                    }
+                                }
+                            }
+                        });
+                    }
+                });
+                bullets = bullets.filter(b => !b.toRemove);
+            }
+            
+            particles.forEach(p => p.update());
+            particles = particles.filter(p => p.life > 0);
+            
+            floatingTexts.forEach(ft => ft.update());
+            floatingTexts = floatingTexts.filter(ft => ft.life > 0);
+            
+            updateUI();
+        }
+
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        if (gameState !== "title" && gameState !== "garage_menu" && gameState !== "slot_select") {
+            ctx.fillStyle = "#0a0a10";
+            ctx.fillRect(offsetX, offsetY, COLS*CELL_SIZE, ROWS*CELL_SIZE);
+            
+            ctx.strokeStyle = "rgba(0, 255, 204, 0.05)"; ctx.lineWidth = 1;
+            for(let c=0; c<=COLS; c++) {
+                ctx.beginPath(); ctx.moveTo(c*CELL_SIZE + offsetX, offsetY); ctx.lineTo(c*CELL_SIZE + offsetX, ROWS*CELL_SIZE + offsetY); ctx.stroke();
+            }
+            for(let r=0; r<=ROWS; r++) {
+                ctx.beginPath(); ctx.moveTo(offsetX, r*CELL_SIZE + offsetY); ctx.lineTo(COLS*CELL_SIZE + offsetX, r*CELL_SIZE + offsetY); ctx.stroke();
+            }
+
+            if (gameState === "garage_field") {
+                let nowTime = Date.now();
+                ctx.fillStyle = "#fff";
+                ctx.font = "bold 24px monospace";
+                ctx.textAlign = "center";
+                ctx.fillText("GARAGE: DRIVE TO TERMINALS", canvas.width / 2, offsetY + 30);
+
+                garageZones.forEach(z => {
+                    let px = (z.cx + 0.5) * CELL_SIZE + offsetX;
+                    let py = (z.cy + 0.5) * CELL_SIZE + offsetY;
+                    
+                    ctx.save();
+                    ctx.globalCompositeOperation = "lighter";
+                    let grad = ctx.createRadialGradient(px, py, 0, px, py, CELL_SIZE*2);
+                    grad.addColorStop(0, z.color);
+                    grad.addColorStop(1, "transparent");
+                    ctx.fillStyle = grad;
+                    ctx.globalAlpha = 0.2;
+                    ctx.beginPath(); ctx.arc(px, py, CELL_SIZE*2, 0, Math.PI*2); ctx.fill();
+                    
+                    ctx.globalAlpha = 1.0;
+                    ctx.strokeStyle = z.color;
+                    ctx.lineWidth = 2;
+                    ctx.setLineDash([15, 10]);
+                    ctx.lineDashOffset = -(nowTime / 30);
+                    ctx.beginPath(); ctx.arc(px, py, CELL_SIZE*1.2, 0, Math.PI*2); ctx.stroke();
+                    ctx.restore();
+
+                    ctx.fillStyle = z.color;
+                    ctx.font = "bold 14px monospace";
+                    ctx.textAlign = "center";
+                    ctx.shadowBlur = 10;
+                    ctx.shadowColor = z.color;
+                    ctx.fillText(z.label, px, py - CELL_SIZE * 1.5);
+                    ctx.shadowBlur = 0;
+                    
+                    if (Math.hypot(player.x - px, player.y - py) < CELL_SIZE * 1.2) {
+                        ctx.fillStyle = "#fff";
+                        ctx.shadowBlur = 5;
+                        ctx.shadowColor = "#fff";
+                        ctx.fillText("PRESS [ENTER] TO ACCESS", px, py + CELL_SIZE * 1.8);
+                        ctx.shadowBlur = 0;
+                        if (keys['enter']) {
+                            openGarageMenu(z.type);
+                            keys['enter'] = false; 
+                        }
+                    }
+                });
+            }
+
+            for (let r = 0; r < ROWS; r++) {
+                for (let c = 0; c < COLS; c++) {
+                    if (grid[r][c] === 1) {
+                        ctx.save(); ctx.fillStyle = "#1a2538"; 
+                        ctx.fillRect(c * CELL_SIZE + offsetX, r * CELL_SIZE + offsetY, CELL_SIZE, CELL_SIZE);
+                        ctx.strokeStyle = "#4a658a"; ctx.lineWidth = 1.5;
+                        ctx.strokeRect(c * CELL_SIZE + offsetX, r * CELL_SIZE + offsetY, CELL_SIZE, CELL_SIZE);
+                        ctx.restore();
+                    }
+                }
+            }
+
+            if (player && player.hp > 0) player.draw();
+            allies.forEach(a => a.draw()); 
+            enemies.forEach(e => e.draw());
+            bullets.forEach(b => b.draw());
+            particles.forEach(p => p.draw(ctx)); 
+            floatingTexts.forEach(ft => ft.draw(ctx)); 
+            
+            if (gameState === "playing" || gameState === "countdown") drawAimGuide();
+
+            if (gameState === "countdown") {
+                let elapsed = Date.now() - countdownStartTime;
+                let currentCount = 3 - Math.floor(elapsed / 1000);
+                
+                if (currentCount !== lastCount && currentCount > 0) {
+                    playSound('countdown');
+                    lastCount = currentCount;
+                }
+
+                ctx.save();
+                ctx.fillStyle = "#ff0055";
+                ctx.font = "bold 80px monospace";
+                ctx.textAlign = "center";
+                ctx.textBaseline = "middle";
+                ctx.shadowBlur = 10; ctx.shadowColor = "#000";
+
+                if (currentCount > 0) {
+                    ctx.fillText(currentCount, canvas.width / 2, canvas.height / 2);
+                } else {
+                    ctx.fillText("START!", canvas.width / 2, canvas.height / 2);
+                    if (elapsed > 3500) {
+                        gameState = "playing"; 
+                    } else if (currentCount !== lastCount) {
+                        playSound('start');
+                        lastCount = currentCount;
+                    }
+                }
+                ctx.restore();
+            }
+        }
+
+        requestAnimationFrame(gameLoop);
+    }
+
+    window.addEventListener('mousemove', e => {
+        const rect = canvas.getBoundingClientRect();
+        mouseX = e.clientX - rect.left;
+        mouseY = e.clientY - rect.top;
+        if (player && (gameState === "playing" || gameState === "countdown" || gameState === "garage_field")) {
+            player.angle = Math.atan2(mouseY - player.y, mouseX - player.x);
+        }
+    });
+
+    window.addEventListener('mousedown', e => {
+        if (gameState !== "playing") return; 
+        if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        isCharging = true;
+        chargeStartTime = Date.now();
+        chargePercent = 0;
+        lastChargeLevel = 0; 
+        chargeMaxReached = false;
+        startChargeSound();
+    });
+
+    window.addEventListener('mouseup', e => {
+        if (!isCharging || gameState !== "playing") return;
+        isCharging = false;
+        stopChargeSound();
+        
+        let elapsed = Date.now() - chargeStartTime;
+        let now = Date.now();
+        
+        let laserLevel = 0;
+        let pitch = 1.0;
+        if (elapsed >= CHARGE_MAX) { laserLevel = 3; pitch = 1.2; }      
+        else if (elapsed >= CHARGE_LV2) { laserLevel = 2; pitch = 1.1; } 
+        else if (elapsed >= CHARGE_LV1) { laserLevel = 1; pitch = 1.0; } 
+
+        if (laserLevel > 0) {
+            bullets.push(new Bullet(player.x, player.y, player.angle, 'player', laserLevel));
+            playSound('charge_fire', pitch); 
+        } else {
+            let myBullets = bullets.filter(b => b.owner === 'player' && b.laserLevel === 0 && !b.isSkill);
+            if (now - player.lastShot > 150 && myBullets.length < 5) {
+                bullets.push(new Bullet(player.x, player.y, player.angle, 'player', 0));
+                playSound('fire');
+                player.lastShot = now;
+            }
+        }
+        chargePercent = 0;
+        document.getElementById('charge-text').innerText = "0%";
+    });
+
+    window.addEventListener('keydown', e => {
+        keys[e.key.toLowerCase()] = true;
+    });
+    window.addEventListener('keyup', e => {
+        keys[e.key.toLowerCase()] = false;
+    });
+    
+    window.addEventListener('load', () => { 
+        setTimeout(() => { 
+            resizeCanvas();
+            showSlotMenu();
+            gameLoop(); 
+        }, 100); 
+    });
+    
+    window.addEventListener('resize', () => { 
+        resizeCanvas(); 
+        if(player) player.updatePixelPosition(); 
+        enemies.forEach(e => e.updatePixelPosition()); 
+        allies.forEach(a => a.updatePixelPosition()); 
+    });
+</script>
+</body>
+</html>
