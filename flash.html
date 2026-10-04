@@ -1,0 +1,676 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>脳力覚醒フラッシュ暗算 | 計算・瞬間記憶診断</title>
+  <style>
+    :root {
+      --bg-dark: #0b132b;
+      --card-bg: #1c2541;
+      --accent: #00f0ff;
+      --accent-yellow: #ffe600;
+      --text: #f1f5f9;
+      --text-sub: #94a3b8;
+      --border: #2e3d66;
+      --danger: #ff3366;
+      --success: #00ff88;
+    }
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+    }
+    body {
+      margin: 0;
+      padding: 15px;
+      font-family: "Helvetica Neue", Arial, "Hiragino Kaku Gothic ProN", "BIZ UDPGothic", sans-serif;
+      background-color: var(--bg-dark);
+      color: var(--text);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+    }
+    .container {
+      max-width: 520px;
+      width: 100%;
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 24px 20px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+      text-align: center;
+    }
+    h1 {
+      margin: 0 0 8px 0;
+      font-size: 1.5rem;
+      color: var(--accent);
+      letter-spacing: 1px;
+    }
+    .description {
+      color: var(--text-sub);
+      font-size: 0.85rem;
+      margin-bottom: 20px;
+      line-height: 1.5;
+    }
+
+    /* レベル選択画面 */
+    .level-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-bottom: 15px;
+    }
+    .level-btn {
+      background: #151d38;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 12px 16px;
+      color: var(--text);
+      text-align: left;
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      transition: all 0.2s ease;
+    }
+    .level-btn:hover {
+      border-color: var(--accent);
+      background: #1c2b54;
+      transform: translateY(-2px);
+    }
+    .level-name {
+      font-weight: bold;
+      font-size: 1rem;
+      color: var(--accent);
+    }
+    .level-detail {
+      font-size: 0.8rem;
+      color: var(--text-sub);
+      margin-top: 3px;
+    }
+    .level-badge {
+      background: rgba(0, 240, 255, 0.15);
+      color: var(--accent);
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      font-weight: bold;
+    }
+
+    /* フラッシュ表示ゾーン */
+    #flash-area {
+      display: none;
+    }
+    .progress-bar-wrap {
+      width: 100%;
+      height: 6px;
+      background: #111a33;
+      border-radius: 3px;
+      overflow: hidden;
+      margin-bottom: 20px;
+    }
+    .progress-bar {
+      height: 100%;
+      width: 0%;
+      background: var(--accent);
+      transition: width 0.3s ease;
+    }
+    .flash-box {
+      height: 180px;
+      background: #0d152d;
+      border: 2px solid var(--border);
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 20px;
+      position: relative;
+    }
+    .flash-number {
+      font-size: 4.5rem;
+      font-weight: bold;
+      color: var(--text);
+      font-family: monospace;
+      letter-spacing: 2px;
+    }
+    .flash-countdown {
+      font-size: 3.5rem;
+      font-weight: bold;
+      color: var(--accent-yellow);
+    }
+
+    /* 回答入力ゾーン */
+    #input-area {
+      display: none;
+    }
+    .answer-display {
+      background: #0d152d;
+      border: 2px solid var(--border);
+      border-radius: 10px;
+      height: 60px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2rem;
+      font-weight: bold;
+      color: var(--accent-yellow);
+      margin-bottom: 15px;
+      font-family: monospace;
+      letter-spacing: 2px;
+    }
+    .keypad {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin-bottom: 15px;
+    }
+    .key-btn {
+      background: #151d38;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 16px 0;
+      font-size: 1.4rem;
+      font-weight: bold;
+      color: var(--text);
+      cursor: pointer;
+      transition: background 0.1s;
+    }
+    .key-btn:active {
+      background: var(--accent);
+      color: var(--bg-dark);
+    }
+    .key-btn.action-clear {
+      color: var(--danger);
+    }
+    .key-btn.action-enter {
+      background: var(--success);
+      color: #0b132b;
+    }
+
+    /* 詳細結果カード */
+    #result-box {
+      display: none;
+      text-align: left;
+      background: #111a33;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px;
+    }
+    .result-rank-header {
+      text-align: center;
+      margin-bottom: 16px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--border);
+    }
+    .rank-badge {
+      font-size: 2rem;
+      font-weight: bold;
+      color: var(--accent-yellow);
+    }
+    .rank-title {
+      font-size: 1.1rem;
+      color: var(--success);
+      font-weight: bold;
+      margin-top: 4px;
+    }
+    .stats-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+    .stat-item {
+      background: #1c2541;
+      padding: 10px 14px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+    }
+    .stat-label {
+      font-size: 0.75rem;
+      color: var(--text-sub);
+    }
+    .stat-val {
+      font-size: 1.2rem;
+      font-weight: bold;
+      color: var(--text);
+      margin-top: 4px;
+    }
+    .analysis-text {
+      font-size: 0.88rem;
+      color: #cbd5e1;
+      line-height: 1.6;
+      background: #18223d;
+      padding: 12px;
+      border-radius: 8px;
+      margin-bottom: 16px;
+    }
+    .history-list {
+      margin-bottom: 16px;
+      font-size: 0.85rem;
+    }
+    .history-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 6px 0;
+      border-bottom: 1px dashed var(--border);
+    }
+    .history-row.correct { color: var(--success); }
+    .history-row.wrong { color: var(--danger); }
+
+    .btn-group {
+      display: flex;
+      gap: 10px;
+    }
+    .btn {
+      flex: 1;
+      padding: 12px;
+      border: none;
+      border-radius: 8px;
+      font-weight: bold;
+      font-size: 0.95rem;
+      cursor: pointer;
+      text-align: center;
+      text-decoration: none;
+      transition: opacity 0.2s;
+    }
+    .btn-retry {
+      background: var(--accent);
+      color: var(--bg-dark);
+    }
+    .btn-share {
+      background: #3b82f6;
+      color: #ffffff;
+    }
+    .btn:hover {
+      opacity: 0.85;
+    }
+    .copied-toast {
+      display: none;
+      text-align: center;
+      font-size: 0.8rem;
+      color: var(--success);
+      margin-top: 8px;
+    }
+    .back-home {
+      display: inline-block;
+      margin-top: 15px;
+      font-size: 0.85rem;
+      color: var(--text-sub);
+      text-decoration: none;
+    }
+    .back-home:hover {
+      color: var(--accent);
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <h1>脳力覚醒フラッシュ暗算</h1>
+    <div class="description">次々と画面に現れる数字を記憶・加算してください。<br>全3問の成績から、あなたの情報処理速度と脳年齢を診断します。</div>
+
+    <!-- 1. レベル選択画面 -->
+    <div id="level-select-area">
+      <div class="level-list">
+        <button class="level-btn" onclick="selectLevel(1)">
+          <div>
+            <div class="level-name">レベル1：初級</div>
+            <div class="level-detail">1桁 × 3口（表示間隔: 1.0秒）</div>
+          </div>
+          <span class="level-badge">初級</span>
+        </button>
+        <button class="level-btn" onclick="selectLevel(2)">
+          <div>
+            <div class="level-name">レベル2：中級</div>
+            <div class="level-detail">2桁 × 3口（表示間隔: 0.8秒）</div>
+          </div>
+          <span class="level-badge">標準</span>
+        </button>
+        <button class="level-btn" onclick="selectLevel(3)">
+          <div>
+            <div class="level-name">レベル3：上級</div>
+            <div class="level-detail">2桁 × 5口（表示間隔: 0.6秒）</div>
+          </div>
+          <span class="level-badge">難関</span>
+        </button>
+        <button class="level-btn" onclick="selectLevel(4)">
+          <div>
+            <div class="level-name">レベル4：達人</div>
+            <div class="level-detail">3桁 × 5口（表示間隔: 0.5秒）</div>
+          </div>
+          <span class="level-badge">激ムズ</span>
+        </button>
+        <button class="level-btn" onclick="selectLevel(5)">
+          <div>
+            <div class="level-name">レベル5：神速</div>
+            <div class="level-detail">3桁 × 7口（表示間隔: 0.35秒）</div>
+          </div>
+          <span class="level-badge">異次元</span>
+        </button>
+      </div>
+      <div>
+        <a href="index.html" class="back-home">← ポートフォリオに戻る</a>
+      </div>
+    </div>
+
+    <!-- 2. フラッシュ表示中画面 -->
+    <div id="flash-area">
+      <div class="progress-bar-wrap">
+        <div class="progress-bar" id="progress-bar"></div>
+      </div>
+      <div style="font-size: 0.9rem; color: var(--text-sub); margin-bottom: 10px;" id="question-indicator">第 1 問 / 全 3 問</div>
+      <div class="flash-box">
+        <div class="flash-number" id="flash-target">準備</div>
+      </div>
+    </div>
+
+    <!-- 3. 回答入力画面（テンキー付き） -->
+    <div id="input-area">
+      <div style="font-size: 0.9rem; color: var(--text-sub); margin-bottom: 8px;">合計の数字を入力してください</div>
+      <div class="answer-display" id="user-input-val">?</div>
+      
+      <div class="keypad">
+        <button class="key-btn" onclick="pressKey('7')">7</button>
+        <button class="key-btn" onclick="pressKey('8')">8</button>
+        <button class="key-btn" onclick="pressKey('9')">9</button>
+        <button class="key-btn" onclick="pressKey('4')">4</button>
+        <button class="key-btn" onclick="pressKey('5')">5</button>
+        <button class="key-btn" onclick="pressKey('6')">6</button>
+        <button class="key-btn" onclick="pressKey('1')">1</button>
+        <button class="key-btn" onclick="pressKey('2')">2</button>
+        <button class="key-btn" onclick="pressKey('3')">3</button>
+        <button class="key-btn action-clear" onclick="pressKey('C')">消去</button>
+        <button class="key-btn" onclick="pressKey('0')">0</button>
+        <button class="key-btn action-enter" onclick="submitAnswer()">決定</button>
+      </div>
+    </div>
+
+    <!-- 4. 詳細結果表示カード -->
+    <div id="result-box">
+      <div class="result-rank-header">
+        <div class="rank-badge" id="res-rank">-</div>
+        <div class="rank-title" id="res-title">-</div>
+      </div>
+
+      <div class="stats-grid">
+        <div class="stat-item">
+          <div class="stat-label">正答率</div>
+          <div class="stat-val" id="res-accuracy">-</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-label">平均回答秒数</div>
+          <div class="stat-val" id="res-avg-time">- 秒</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-label">推定脳年齢</div>
+          <div class="stat-val" id="res-brain-age">- 歳</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-label">情報処理速度</div>
+          <div class="stat-val" id="res-speed-score">- 点</div>
+        </div>
+      </div>
+
+      <div class="history-list" id="res-history">
+        <!-- 各問の結果行 -->
+      </div>
+
+      <div class="analysis-text" id="res-analysis">
+        分析文がここに表示されます。
+      </div>
+
+      <div class="btn-group">
+        <button class="btn btn-retry" onclick="resetToMenu()">別のレベルに挑戦</button>
+        <button class="btn btn-share" onclick="copyResult()">結果をコピー</button>
+      </div>
+      <div class="copied-toast" id="copied-toast">結果をクリップボードにコピーしました！</div>
+    </div>
+  </div>
+
+  <script>
+    // レベル設定: count(口数), digits(桁数), speed(ms)
+    const LEVEL_CONFIGS = {
+      1: { name: 'レベル1 (初級)', count: 3, min: 1, max: 9, speed: 1000 },
+      2: { name: 'レベル2 (中級)', count: 3, min: 10, max: 99, speed: 800 },
+      3: { name: 'レベル3 (上級)', count: 5, min: 10, max: 99, speed: 600 },
+      4: { name: 'レベル4 (達人)', count: 5, min: 100, max: 999, speed: 500 },
+      5: { name: 'レベル5 (神速)', count: 7, min: 100, max: 999, speed: 350 }
+    };
+
+    const TOTAL_QUESTIONS = 3;
+    let currentLevel = 1;
+    let currentQuestionIdx = 0;
+    let currentNumbers = [];
+    let currentCorrectAnswer = 0;
+    let questionResults = [];
+    let answerStartTime = 0;
+    let inputString = "";
+
+    const levelSelectArea = document.getElementById('level-select-area');
+    const flashArea = document.getElementById('flash-area');
+    const inputArea = document.getElementById('input-area');
+    const resultBox = document.getElementById('result-box');
+    const flashTarget = document.getElementById('flash-target');
+    const progressBar = document.getElementById('progress-bar');
+    const questionIndicator = document.getElementById('question-indicator');
+    const userInputVal = document.getElementById('user-input-val');
+    const copiedToast = document.getElementById('copied-toast');
+
+    function selectLevel(lvl) {
+      currentLevel = lvl;
+      currentQuestionIdx = 0;
+      questionResults = [];
+      levelSelectArea.style.display = 'none';
+      resultBox.style.display = 'none';
+      flashArea.style.display = 'block';
+      startNextQuestion();
+    }
+
+    function startNextQuestion() {
+      inputArea.style.display = 'none';
+      flashArea.style.display = 'block';
+      inputString = "";
+      userInputVal.innerText = "?";
+
+      questionIndicator.innerText = `第 ${currentQuestionIdx + 1} 問 / 全 ${TOTAL_QUESTIONS} 問 (${LEVEL_CONFIGS[currentLevel].name})`;
+      progressBar.style.width = `${(currentQuestionIdx / TOTAL_QUESTIONS) * 100}%`;
+
+      const cfg = LEVEL_CONFIGS[currentLevel];
+      currentNumbers = [];
+      for (let i = 0; i < cfg.count; i++) {
+        const val = Math.floor(Math.random() * (cfg.max - cfg.min + 1)) + cfg.min;
+        currentNumbers.push(val);
+      }
+      currentCorrectAnswer = currentNumbers.reduce((a, b) => a + b, 0);
+
+      // カウントダウン
+      let count = 3;
+      flashTarget.className = "flash-countdown";
+      flashTarget.innerText = count;
+
+      const countdownTimer = setInterval(() => {
+        count--;
+        if (count > 0) {
+          flashTarget.innerText = count;
+        } else if (count === 0) {
+          flashTarget.innerText = "スタート！";
+        } else {
+          clearInterval(countdownTimer);
+          runFlashNumbers();
+        }
+      }, 700);
+    }
+
+    function runFlashNumbers() {
+      flashTarget.className = "flash-number";
+      const cfg = LEVEL_CONFIGS[currentLevel];
+      let idx = 0;
+
+      const numberInterval = setInterval(() => {
+        if (idx < currentNumbers.length) {
+          flashTarget.innerText = currentNumbers[idx];
+          idx++;
+        } else {
+          clearInterval(numberInterval);
+          flashTarget.innerText = "";
+          setTimeout(showInputScreen, 250);
+        }
+      }, cfg.speed);
+    }
+
+    function showInputScreen() {
+      flashArea.style.display = 'none';
+      inputArea.style.display = 'block';
+      answerStartTime = performance.now();
+    }
+
+    function pressKey(k) {
+      if (k === 'C') {
+        inputString = "";
+      } else {
+        if (inputString.length < 7) {
+          inputString += k;
+        }
+      }
+      userInputVal.innerText = inputString === "" ? "?" : inputString;
+    }
+
+    // PCキーボード入力対応
+    window.addEventListener('keydown', (e) => {
+      if (inputArea.style.display === 'block') {
+        if (e.key >= '0' && e.key <= '9') {
+          pressKey(e.key);
+        } else if (e.key === 'Backspace' || e.key === 'Escape') {
+          pressKey('C');
+        } else if (e.key === 'Enter') {
+          submitAnswer();
+        }
+      }
+    });
+
+    function submitAnswer() {
+      if (inputString === "") return;
+
+      const duration = ((performance.now() - answerStartTime) / 1000).toFixed(2);
+      const userVal = parseInt(inputString, 10);
+      const isCorrect = (userVal === currentCorrectAnswer);
+
+      questionResults.push({
+        qIdx: currentQuestionIdx + 1,
+        userVal: userVal,
+        correctVal: currentCorrectAnswer,
+        isCorrect: isCorrect,
+        time: parseFloat(duration)
+      });
+
+      currentQuestionIdx++;
+      if (currentQuestionIdx < TOTAL_QUESTIONS) {
+        startNextQuestion();
+      } else {
+        finishTest();
+      }
+    }
+
+    function finishTest() {
+      inputArea.style.display = 'none';
+      flashArea.style.display = 'none';
+      resultBox.style.display = 'block';
+
+      const correctCount = questionResults.filter(r => r.isCorrect).length;
+      const accuracy = Math.round((correctCount / TOTAL_QUESTIONS) * 100);
+      const avgTime = (questionResults.reduce((a, b) => a + b.time, 0) / TOTAL_QUESTIONS).toFixed(2);
+
+      // スコア計算
+      let baseScore = (currentLevel * 20) * (accuracy / 100);
+      let timeBonus = Math.max(0, (5 - avgTime) * 4);
+      let totalScore = Math.min(100, Math.round(baseScore + timeBonus));
+
+      // 推定脳年齢算出
+      let brainAge = Math.max(16, Math.min(70, Math.round(48 - (totalScore * 0.32))));
+
+      // ランク判定
+      let rank = "";
+      let title = "";
+      let comment = "";
+
+      if (accuracy === 100 && currentLevel >= 4) {
+        rank = "超人・S級";
+        title = "【電子頭脳】人間計算機クラス";
+        comment = `信じられない情報処理速度です！高速で切り替わる数字を正確にワーキングメモリ（作業記憶）に保持し、瞬時に合算できています。脳の活性化レベルは極めて最高潮です。`;
+      } else if (accuracy >= 67 && currentLevel >= 3) {
+        rank = "優秀・A級";
+        title = "【直感演算マスター】上位脳トレプレイヤー";
+        comment = `極めて素早い直感計算ができています。数字を目で追うと同時に頭の中で映像化する能力（そろばん式イメージ記憶）が非常に優れています。`;
+      } else if (accuracy >= 67) {
+        rank = "標準・B級";
+        title = "【軽快回転】現役バリバリ脳";
+        comment = `安定した集中力と計算スピードです。基礎的な脳の瞬発力はしっかり整っています。上の難易度に挑んでいくと、さらに記憶容量が拡張されます。`;
+      } else if (accuracy >= 33) {
+        rank = "挑戦者・C級";
+        title = "【ウォーミングアップ完了】伸び代十分脳";
+        comment = `あと少し！スピードに圧倒されて最後の桁を取りこぼしてしまったかもしれません。深呼吸して画面の真ん中をぼんやり見つめるようにすると、数字が頭に残りやすくなります。`;
+      } else {
+        rank = "要休養・D級";
+        title = "【脳疲労アラート】休息推奨モード";
+        comment = `数字のスピードに目が追いつかなかったようです。スマホの見過ぎや日々の疲労で脳の作業メモリが一時的にパンクしている可能性があります。温かい飲み物を飲んで再挑戦してみましょう。`;
+      }
+
+      document.getElementById('res-rank').innerText = rank;
+      document.getElementById('res-title').innerText = title;
+      document.getElementById('res-accuracy').innerText = `${accuracy}% (${correctCount}/${TOTAL_QUESTIONS})`;
+      document.getElementById('res-avg-time').innerText = `${avgTime} 秒`;
+      document.getElementById('res-brain-age').innerText = `${brainAge} 歳`;
+      document.getElementById('res-speed-score').innerText = `${totalScore} 点`;
+      document.getElementById('res-analysis').innerText = comment;
+
+      // 履歴行の生成
+      let historyHtml = "";
+      questionResults.forEach(r => {
+        historyHtml += `
+          <div class="history-row ${r.isCorrect ? 'correct' : 'wrong'}">
+            <span>第${r.qIdx}問: あなたの回答 ${r.userVal} (正解: ${r.correctVal})</span>
+            <span>${r.isCorrect ? '⭕ 正解' : '❌ 不正解'} (${r.time}秒)</span>
+          </div>
+        `;
+      });
+      document.getElementById('res-history').innerHTML = historyHtml;
+
+      // コピー用テキスト
+      window.lastFlashResult = 
+`【脳力覚醒フラッシュ暗算 診断結果】
+挑戦難易度：${LEVEL_CONFIGS[currentLevel].name}
+判定ランク：${rank}
+獲得称号：${title}
+━━━━━━━━━━━━━━
+・正答率：${accuracy}% (${correctCount}/${TOTAL_QUESTIONS})
+・平均回答秒数：${avgTime} 秒
+・推定脳年齢：約 ${brainAge} 歳
+・情報処理スコア：${totalScore} 点
+━━━━━━━━━━━━━━
+#フラッシュ暗算 #脳トレ診断`;
+    }
+
+    function resetToMenu() {
+      levelSelectArea.style.display = 'block';
+      flashArea.style.display = 'none';
+      inputArea.style.display = 'none';
+      resultBox.style.display = 'none';
+      copiedToast.style.display = 'none';
+    }
+
+    function copyResult() {
+      if (window.lastFlashResult) {
+        navigator.clipboard.writeText(window.lastFlashResult).then(() => {
+          copiedToast.style.display = 'block';
+          setTimeout(() => {
+            copiedToast.style.display = 'none';
+          }, 3000);
+        });
+      }
+    }
+  </script>
+</body>
+</html>
