@@ -1,0 +1,698 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>超精密・条件付き判断反射テスト | 脳機能診断</title>
+  <style>
+    :root {
+      --bg-dark: #0b132b;
+      --card-bg: #1c2541;
+      --accent: #00f0ff;
+      --accent-yellow: #ffe600;
+      --text: #f1f5f9;
+      --text-sub: #94a3b8;
+      --border: #2e3d66;
+      --target-green: #00ff88;
+      --fake-red: #ff3366;
+    }
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+    }
+    body {
+      margin: 0;
+      padding: 15px;
+      font-family: "Helvetica Neue", Arial, "Hiragino Kaku Gothic ProN", "BIZ UDPGothic", sans-serif;
+      background-color: var(--bg-dark);
+      color: var(--text);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+    }
+    .container {
+      max-width: 600px;
+      width: 100%;
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 24px 20px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+      text-align: center;
+    }
+    h1 {
+      margin: 0 0 8px 0;
+      font-size: 1.45rem;
+      color: var(--accent);
+      letter-spacing: 1px;
+    }
+    .rule-box {
+      background: #111a33;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 12px;
+      font-size: 0.85rem;
+      color: var(--text-sub);
+      line-height: 1.6;
+      margin-bottom: 20px;
+      text-align: left;
+    }
+    .rule-highlight {
+      font-weight: bold;
+      color: var(--target-green);
+    }
+    .rule-danger {
+      font-weight: bold;
+      color: var(--fake-red);
+    }
+
+    /* 計測進行ドット */
+    .rounds-bar {
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+    .round-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: #2e3d66;
+      transition: all 0.2s ease;
+    }
+    .round-dot.active {
+      background: var(--accent);
+      box-shadow: 0 0 8px var(--accent);
+    }
+    .round-dot.done {
+      background: var(--target-green);
+    }
+    .round-dot.failed {
+      background: var(--fake-red);
+    }
+
+    /* メイン操作ゾーン */
+    #tap-zone {
+      width: 100%;
+      height: 250px;
+      border-radius: 14px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      background-color: #151d38;
+      border: 2px dashed var(--border);
+      margin-bottom: 20px;
+      transition: background-color 0.1s ease, transform 0.05s ease;
+    }
+    #tap-zone:active {
+      transform: scale(0.98);
+    }
+    #zone-title {
+      font-size: 1.5rem;
+      font-weight: bold;
+    }
+    #zone-desc {
+      font-size: 0.85rem;
+      margin-top: 8px;
+      opacity: 0.85;
+    }
+
+    /* 状態別の発光カラー */
+    .state-waiting {
+      background-color: #1e294b !important;
+      border: 2px solid var(--accent) !important;
+      color: var(--accent);
+    }
+    .state-go {
+      background-color: var(--target-green) !important;
+      border: 2px solid #00cc6a !important;
+      color: #0b132b !important;
+      box-shadow: 0 0 30px rgba(0, 255, 136, 0.4);
+    }
+    .state-nogo {
+      background-color: var(--fake-red) !important;
+      border: 2px solid #cc003a !important;
+      color: #ffffff !important;
+      box-shadow: 0 0 30px rgba(255, 51, 102, 0.4);
+    }
+
+    /* 結果画面 */
+    #result-box {
+      display: none;
+      text-align: left;
+      background: #111a33;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px;
+    }
+    .result-rank-header {
+      text-align: center;
+      margin-bottom: 16px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--border);
+    }
+    .rank-badge {
+      font-size: 2rem;
+      font-weight: bold;
+      color: var(--accent-yellow);
+    }
+    .rank-title {
+      font-size: 1.05rem;
+      color: var(--target-green);
+      font-weight: bold;
+      margin-top: 4px;
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+    .stat-item {
+      background: #1c2541;
+      padding: 10px 14px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+    }
+    .stat-label {
+      font-size: 0.75rem;
+      color: var(--text-sub);
+    }
+    .stat-val {
+      font-size: 1.25rem;
+      font-weight: bold;
+      color: var(--text);
+      margin-top: 4px;
+    }
+
+    /* 正規分布グラフ枠 */
+    .chart-container {
+      background: #0d152d;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 15px 12px 10px 12px;
+      margin-bottom: 16px;
+      text-align: center;
+    }
+    .chart-title {
+      font-size: 0.85rem;
+      font-weight: bold;
+      color: var(--accent);
+      margin-bottom: 8px;
+      text-align: left;
+    }
+    #distCanvas {
+      width: 100%;
+      height: 160px;
+      display: block;
+    }
+
+    .analysis-text {
+      font-size: 0.88rem;
+      color: #cbd5e1;
+      line-height: 1.6;
+      background: #18223d;
+      padding: 12px;
+      border-radius: 8px;
+      margin-bottom: 16px;
+    }
+
+    .btn-group {
+      display: flex;
+      gap: 10px;
+    }
+    .btn {
+      flex: 1;
+      padding: 12px;
+      border: none;
+      border-radius: 8px;
+      font-weight: bold;
+      font-size: 0.95rem;
+      cursor: pointer;
+      text-align: center;
+      transition: opacity 0.2s;
+    }
+    .btn-retry {
+      background: var(--accent);
+      color: var(--bg-dark);
+    }
+    .btn-share {
+      background: #3b82f6;
+      color: #ffffff;
+    }
+    .btn:hover {
+      opacity: 0.85;
+    }
+    .copied-toast {
+      display: none;
+      text-align: center;
+      font-size: 0.8rem;
+      color: var(--target-green);
+      margin-top: 8px;
+    }
+    .back-home {
+      display: inline-block;
+      margin-top: 15px;
+      font-size: 0.85rem;
+      color: var(--text-sub);
+      text-decoration: none;
+    }
+    .back-home:hover {
+      color: var(--accent);
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <h1>条件付き判断・反射神経診断</h1>
+    
+    <div class="rule-box" id="rule-box">
+      <strong>【測定ルール】</strong><br>
+      ① 画面が<span class="rule-highlight">「緑色（突撃！）」</span>になったら $\rightarrow$ <strong>限界最速でタップ！</strong><br>
+      ② 画面が<span class="rule-danger">「赤色（待て！）」</span>になったら $\rightarrow$ <strong>絶対に触るな（我慢）！</strong><br>
+      全6回の試行で、あなたの純粋な反応速度と衝動抑制ブレーキ力を徹底解析します。
+    </div>
+
+    <!-- 進行ドット -->
+    <div class="rounds-bar" id="rounds-bar"></div>
+
+    <!-- タップエリア -->
+    <div id="tap-zone">
+      <div id="zone-title">タップして開始</div>
+      <div id="zone-desc">心の準備ができたら押してください</div>
+    </div>
+
+    <!-- 詳細結果表示カード -->
+    <div id="result-box">
+      <div class="result-rank-header">
+        <div class="rank-badge" id="res-rank">-</div>
+        <div class="rank-title" id="res-title">-</div>
+      </div>
+
+      <div class="stats-grid">
+        <div class="stat-item">
+          <div class="stat-label">判断反応速度 (平均)</div>
+          <div class="stat-val" id="res-avg-time">- ms</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-label">自制ブレーキ成功率</div>
+          <div class="stat-val" id="res-brake-rate">100%</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-label">全人類推定偏差値</div>
+          <div class="stat-val" id="res-deviation">-</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-label">上位位置</div>
+          <div class="stat-val" id="res-percentile">-</div>
+        </div>
+      </div>
+
+      <!-- 正規分布グラフ -->
+      <div class="chart-container">
+        <div class="chart-title">📊 反応速度の正規分布比較（全体の中の位置）</div>
+        <canvas id="distCanvas" width="520" height="180"></canvas>
+      </div>
+
+      <div class="analysis-text" id="res-analysis">
+        分析文がここに表示されます。
+      </div>
+
+      <div class="btn-group">
+        <button class="btn btn-retry" onclick="resetGame()">もう一度挑戦する</button>
+        <button class="btn btn-share" onclick="copyResult()">結果をコピー</button>
+      </div>
+      <div class="copied-toast" id="copied-toast">クリップボードに結果をコピーしました！</div>
+    </div>
+
+    <div>
+      <a href="lab.html" class="back-home">← 実験ラボ一覧に戻る</a>
+    </div>
+  </div>
+
+  <script>
+    // 試行シーケンス設計（全6回: 突撃4回、フェイク2回をシャッフル）
+    const BASE_TRIALS = ['go', 'go', 'nogo', 'go', 'nogo', 'go'];
+    let trials = [];
+    let currentTrialIdx = 0;
+    
+    let state = 'idle'; // idle, waiting, go, nogo, interval, finished
+    let timerId = null;
+    let nogoTimerId = null;
+    let startTime = 0;
+
+    let validScores = []; // 有効なGoの反応速度
+    let fakeBrakeFails = 0; // 赤色で誤タップした回数
+    let earlyTapCount = 0; // 待機中のお手つき回数
+
+    const tapZone = document.getElementById('tap-zone');
+    const zoneTitle = document.getElementById('zone-title');
+    const zoneDesc = document.getElementById('zone-desc');
+    const roundsBar = document.getElementById('rounds-bar');
+    const resultBox = document.getElementById('result-box');
+    const copiedToast = document.getElementById('copied-toast');
+
+    function initDots() {
+      roundsBar.innerHTML = '';
+      for (let i = 0; i < BASE_TRIALS.length; i++) {
+        const dot = document.createElement('div');
+        dot.className = 'round-dot';
+        dot.id = `dot-${i}`;
+        roundsBar.appendChild(dot);
+      }
+    }
+
+    function updateDots() {
+      for (let i = 0; i < BASE_TRIALS.length; i++) {
+        const dot = document.getElementById(`dot-${i}`);
+        if (!dot) continue;
+        dot.className = 'round-dot';
+        if (i < currentTrialIdx) {
+          dot.classList.add('done');
+        } else if (i === currentTrialIdx && state !== 'finished') {
+          dot.classList.add('active');
+        }
+      }
+    }
+
+    tapZone.addEventListener('pointerdown', (e) => {
+      e.preventDefault();
+      handleAction();
+    });
+
+    window.addEventListener('keydown', (e) => {
+      if (e.code === 'Space' && state !== 'finished') {
+        e.preventDefault();
+        handleAction();
+      }
+    });
+
+    function handleAction() {
+      if (state === 'idle' || state === 'interval') {
+        startNextTrialWait();
+      } else if (state === 'waiting') {
+        // まだ色が出てないのにお手つき
+        clearTimeout(timerId);
+        earlyTapCount++;
+        state = 'interval';
+        tapZone.className = '';
+        zoneTitle.innerText = '早すぎます！（お手つき）';
+        zoneDesc.innerText = '色が変わるまで待ってください。タップして再開';
+      } else if (state === 'go') {
+        // 正しいターゲットをタップ（成功）
+        const duration = Math.round(performance.now() - startTime);
+        validScores.push(duration);
+        document.getElementById(`dot-${currentTrialIdx}`).classList.add('done');
+        currentTrialIdx++;
+        state = 'interval';
+        tapZone.className = '';
+
+        if (currentTrialIdx >= BASE_TRIALS.length) {
+          finishTest();
+        } else {
+          zoneTitle.innerText = `${duration} ミリ秒！`;
+          zoneDesc.innerText = `タップして第 ${currentTrialIdx + 1} 回目へ`;
+          updateDots();
+        }
+      } else if (state === 'nogo') {
+        // 赤なのに押してしまった（自制失敗）
+        clearTimeout(nogoTimerId);
+        fakeBrakeFails++;
+        document.getElementById(`dot-${currentTrialIdx}`).classList.add('failed');
+        currentTrialIdx++;
+        state = 'interval';
+        tapZone.className = '';
+
+        if (currentTrialIdx >= BASE_TRIALS.length) {
+          finishTest();
+        } else {
+          zoneTitle.innerText = 'トラップ！赤は押しちゃダメ！';
+          zoneDesc.innerText = `ブレーキ失敗。タップして第 ${currentTrialIdx + 1} 回目へ`;
+          updateDots();
+        }
+      }
+    }
+
+    function startNextTrialWait() {
+      state = 'waiting';
+      tapZone.className = 'state-waiting';
+      zoneTitle.innerText = '合図を待機中…';
+      zoneDesc.innerText = '緑なら即押し！ 赤なら触らず見送り！';
+      updateDots();
+
+      const delay = Math.floor(Math.random() * 2200) + 1400; // 1.4〜3.6秒のランダム
+      timerId = setTimeout(() => {
+        triggerSignal();
+      }, delay);
+    }
+
+    function triggerSignal() {
+      const currentType = trials[currentTrialIdx];
+
+      if (currentType === 'go') {
+        state = 'go';
+        tapZone.className = 'state-go';
+        zoneTitle.innerText = '押せっ！！';
+        zoneDesc.innerText = '緑色が出現！ 全力でタップ！';
+        startTime = performance.now();
+      } else {
+        // nogo（赤色・触るな）
+        state = 'nogo';
+        tapZone.className = 'state-nogo';
+        zoneTitle.innerText = '待て！！（押すな）';
+        zoneDesc.innerText = '赤色はトラップ！ そのまま耐えて！';
+        
+        // 1.2秒間耐え切れたら成功とみなして次へ進む
+        nogoTimerId = setTimeout(() => {
+          if (state === 'nogo') {
+            document.getElementById(`dot-${currentTrialIdx}`).classList.add('done');
+            currentTrialIdx++;
+            state = 'interval';
+            tapZone.className = '';
+
+            if (currentTrialIdx >= BASE_TRIALS.length) {
+              finishTest();
+            } else {
+              zoneTitle.innerText = '見事！ブレーキ成功';
+              zoneDesc.innerText = `タップして第 ${currentTrialIdx + 1} 回目へ`;
+              updateDots();
+            }
+          }
+        }, 1200);
+      }
+    }
+
+    function finishTest() {
+      state = 'finished';
+      tapZone.style.display = 'none';
+      document.getElementById('rule-box').style.display = 'none';
+      roundsBar.style.display = 'none';
+      resultBox.style.display = 'block';
+
+      // 平均反応速度
+      const avg = validScores.length > 0 
+        ? Math.round(validScores.reduce((a, b) => a + b, 0) / validScores.length)
+        : 500;
+
+      // 自制ブレーキ成功率
+      const totalFakes = BASE_TRIALS.filter(t => t === 'nogo').length;
+      const brakeSuccessCount = totalFakes - fakeBrakeFails;
+      const brakeRate = Math.max(0, Math.round((brakeSuccessCount / totalFakes) * 100));
+
+      // 選択反応時間の基準値: 一般平均360ms, 標準偏差55ms
+      let deviation = Math.round(50 + ((360 - avg) / 55) * 10);
+      if (deviation > 82) deviation = 82;
+      if (deviation < 25) deviation = 25;
+
+      // 正規分布に基づく上位％の概算
+      let percentile = Math.round(100 / (1 + Math.exp((avg - 360) / 45)));
+      if (percentile < 1) percentile = 1;
+      if (percentile > 99) percentile = 99;
+
+      // ランク・称号
+      let rank = '';
+      let title = '';
+      let analysis = '';
+
+      if (avg <= 270 && fakeBrakeFails === 0) {
+        rank = '神速判断・S級';
+        title = '【極限の動体判断】超一流プロゲーマー・戦闘機パイロット級';
+        analysis = `平均反応速度 ${avg} ミリ秒、トラップ回避率100%。色を識別してから指へ指令を出すラグが極限まで削ぎ落とされており、なおかつ不要な衝動を完全にブレーキできる最高峰の脳機能です。`;
+      } else if (avg <= 330 && fakeBrakeFails === 0) {
+        rank = '猛者判断・A級';
+        title = '【冷静沈着な俊敏脳】上位アクションプレイヤー級';
+        analysis = `平均反応速度 ${avg} ミリ秒。一般平均（約360ミリ秒）を大きく上回り、フェイクへの我慢も完璧です。状況判断と瞬発力のバランスが最も理想的な状態に仕上がっています。`;
+      } else if (avg <= 390 && fakeBrakeFails <= 1) {
+        rank = '標準健康・B級';
+        title = '【安定回転脳】街で見かける健康優良人類';
+        analysis = `平均反応速度 ${avg} ミリ秒。日本人の選択反応基準値にしっかり収まっています。フェイクに対する注意深さも保たれており、日常の車の運転やスポーツでも安全確実な判断ができています。`;
+      } else if (fakeBrakeFails >= 2) {
+        rank = '猪突猛進・C級';
+        title = '【アクセル全開】ブレーキ故障の突撃兵';
+        analysis = `スピードを出そうとするあまり、フェイクの赤色にも指が動いてしまいました。反射速度自体は悪くありませんが、視覚情報の選別が追いついていない状態です。一瞬深呼吸してリラックスしてみましょう。`;
+      } else {
+        rank = '要休養・D級';
+        title = '【脳疲労アラート】冬眠直前のまったりモード';
+        analysis = `平均反応速度 ${avg} ミリ秒。視覚刺激から指への伝達にやや遅れが生じています。寝不足、眼精疲労、あるいはスマホの長時間の使用で脳がエネルギー切れを起こしている可能性があります。`;
+      }
+
+      // 画面反映
+      document.getElementById('res-rank').innerText = rank;
+      document.getElementById('res-title').innerText = title;
+      document.getElementById('res-avg-time').innerText = `${avg} ms`;
+      document.getElementById('res-brake-rate').innerText = `${brakeRate}% (${brakeSuccessCount}/${totalFakes})`;
+      document.getElementById('res-deviation').innerText = `約 ${deviation}`;
+      document.getElementById('res-percentile').innerText = `上位 約 ${percentile}%`;
+      document.getElementById('res-analysis').innerText = analysis;
+
+      // 正規分布グラフの描画
+      drawDistribution(avg);
+
+      // コピー用テキスト
+      window.lastConditionResult = 
+`【超精密・条件付き判断反射テスト 結果】
+判定ランク：${rank}
+獲得称号：${title}
+━━━━━━━━━━━━━━
+・判断反応速度：${avg} ms (平均)
+・自制ブレーキ率：${brakeRate}%
+・全人類推定偏差値：約 ${deviation}
+・全体位置：上位 約 ${percentile}%
+━━━━━━━━━━━━━━
+#反射神経測定 #GoNoGoテスト #脳力診断`;
+    }
+
+    // 正規分布（ベルカーブ）の描画ロジック
+    function drawDistribution(userAvg) {
+      const cvs = document.getElementById('distCanvas');
+      const ctx = cvs.getContext('2d');
+      const w = cvs.width;
+      const h = cvs.height;
+
+      ctx.clearRect(0, 0, w, h);
+
+      const mean = 360;  // 平均 360ms
+      const sigma = 55;  // 標準偏差 55ms
+      const minX = 180;  // 左端（最速帯）
+      const maxX = 540;  // 右端（鈍重帯）
+
+      function getGauss(x) {
+        return Math.exp(-0.5 * Math.pow((x - mean) / sigma, 2));
+      }
+
+      // 背景グリッド
+      ctx.strokeStyle = "rgba(46, 61, 102, 0.4)";
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(30, h - 25);
+      ctx.lineTo(w - 30, h - 25);
+      ctx.stroke();
+
+      // ベルカーブの描画
+      ctx.beginPath();
+      ctx.strokeStyle = "#00f0ff";
+      ctx.lineWidth = 3;
+      ctx.shadowBlur = 10;
+      ctx.shadowColor = "#00f0ff";
+
+      for (let px = 30; px <= w - 30; px++) {
+        const ms = minX + ((px - 30) / (w - 60)) * (maxX - minX);
+        const yVal = getGauss(ms);
+        const py = (h - 30) - (yVal * (h - 60));
+        if (px === 30) ctx.moveTo(px, py);
+        else ctx.lineTo(px, py);
+      }
+      ctx.stroke();
+      ctx.shadowBlur = 0;
+
+      // 平均線（360ms）
+      const avgPx = 30 + ((mean - minX) / (maxX - minX)) * (w - 60);
+      ctx.strokeStyle = "rgba(148, 163, 184, 0.4)";
+      ctx.setLineDash([4, 4]);
+      ctx.beginPath();
+      ctx.moveTo(avgPx, 15);
+      ctx.lineTo(avgPx, h - 25);
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      ctx.fillStyle = "#94a3b8";
+      ctx.font = "10px sans-serif";
+      ctx.textAlign = "center";
+      ctx.fillText("人類平均 (360ms)", avgPx, h - 12);
+      ctx.fillText("速い (200ms)", 60, h - 12);
+      ctx.fillText("遅い (500ms)", w - 60, h - 12);
+
+      // ユーザー位置のプロット
+      const clampedUser = Math.max(minX, Math.min(maxX, userAvg));
+      const userPx = 30 + ((clampedUser - minX) / (maxX - minX)) * (w - 60);
+      const userPy = (h - 30) - (getGauss(clampedUser) * (h - 60));
+
+      // ユーザーの縦ライン
+      ctx.strokeStyle = "#ffe600";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(userPx, userPy);
+      ctx.lineTo(userPx, h - 25);
+      ctx.stroke();
+
+      // ユーザーの光るマーカー
+      ctx.save();
+      ctx.fillStyle = "#ffe600";
+      ctx.shadowBlur = 15;
+      ctx.shadowColor = "#ffe600";
+      ctx.beginPath();
+      ctx.arc(userPx, userPy, 6, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+
+      // ラベル表示
+      ctx.fillStyle = "#ffe600";
+      ctx.font = "bold 12px sans-serif";
+      ctx.textAlign = "center";
+      ctx.fillText(`あなた: ${userAvg}ms`, userPx, Math.max(20, userPy - 12));
+    }
+
+    function resetGame() {
+      trials = [...BASE_TRIALS].sort(() => Math.random() - 0.5); // 毎回ランダム順に並び替え
+      currentTrialIdx = 0;
+      validScores = [];
+      fakeBrakeFails = 0;
+      earlyTapCount = 0;
+      state = 'idle';
+
+      tapZone.style.display = 'flex';
+      tapZone.className = '';
+      document.getElementById('rule-box').style.display = 'block';
+      roundsBar.style.display = 'flex';
+      resultBox.style.display = 'none';
+      copiedToast.style.display = 'none';
+
+      zoneTitle.innerText = 'タップして開始';
+      zoneDesc.innerText = '心の準備ができたら押してください';
+      initDots();
+      updateDots();
+    }
+
+    function copyResult() {
+      if (window.lastConditionResult) {
+        navigator.clipboard.writeText(window.lastConditionResult).then(() => {
+          copiedToast.style.display = 'block';
+          setTimeout(() => {
+            copiedToast.style.display = 'none';
+          }, 3000);
+        });
+      }
+    }
+
+    // 初回初期化
+    resetGame();
+  </script>
+</body>
+</html>
