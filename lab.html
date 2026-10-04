@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>シミュレーション実験ラボ | 診断ツール集</title>
+  <style>
+    :root {
+      --bg-main: #0b132b;
+      --bg-card: #1c2541;
+      --accent-cyan: #00f0ff;
+      --accent-yellow: #ffe600;
+      --text-main: #f1f5f9;
+      --text-sub: #94a3b8;
+      --border-color: #2e3d66;
+    }
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+    body {
+      margin: 0;
+      padding: 40px 20px;
+      font-family: "Helvetica Neue", Arial, sans-serif;
+      color: var(--text-main);
+      background-color: var(--bg-main);
+      background-image: 
+        linear-gradient(rgba(0, 240, 255, 0.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0, 240, 255, 0.04) 1px, transparent 1px);
+      background-size: 32px 32px;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .header {
+      text-align: center;
+      max-width: 800px;
+      margin-bottom: 40px;
+    }
+    h1 {
+      color: var(--accent-cyan);
+      font-size: 2rem;
+      letter-spacing: 2px;
+      margin-bottom: 10px;
+    }
+    p {
+      color: var(--text-sub);
+      line-height: 1.6;
+      margin: 0;
+    }
+    /* ツールカード並び */
+    .lab-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 20px;
+      max-width: 900px;
+      width: 100%;
+      margin-bottom: 40px;
+    }
+    .lab-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+    }
+    .lab-card:hover {
+      transform: translateY(-5px);
+      border-color: var(--accent-cyan);
+      box-shadow: 0 10px 25px rgba(0, 240, 255, 0.2);
+    }
+    .card-tag {
+      font-size: 0.75rem;
+      font-weight: bold;
+      color: var(--accent-cyan);
+      margin-bottom: 8px;
+    }
+    .card-title {
+      font-size: 1.25rem;
+      font-weight: bold;
+      color: var(--text-main);
+      margin-bottom: 10px;
+    }
+    .card-desc {
+      font-size: 0.88rem;
+      color: var(--text-sub);
+      line-height: 1.5;
+      margin-bottom: 20px;
+      flex-grow: 1;
+    }
+    .play-btn {
+      display: block;
+      text-align: center;
+      padding: 10px 16px;
+      background: rgba(0, 240, 255, 0.1);
+      border: 1px solid var(--accent-cyan);
+      color: var(--accent-cyan);
+      text-decoration: none;
+      font-weight: bold;
+      border-radius: 6px;
+      transition: all 0.2s ease;
+    }
+    .play-btn:hover {
+      background: var(--accent-cyan);
+      color: var(--bg-main);
+    }
+    .back-btn {
+      display: inline-block;
+      padding: 12px 30px;
+      color: var(--text-sub);
+      background: #151d38;
+      border: 1px solid var(--border-color);
+      text-decoration: none;
+      font-weight: bold;
+      border-radius: 6px;
+      transition: all 0.2s ease;
+    }
+    .back-btn:hover {
+      color: var(--text-main);
+      border-color: var(--text-main);
+    }
+  </style>
+</head>
+<body>
+
+  <div class="header">
+    <h1>シミュレーション実験ラボ</h1>
+    <p>ブラウザ上で直接動作する診断ツール・認知機能テスト・シミュレーターの集積所だに。<br>気になるテストを選んで挑戦してみてください。</p>
+  </div>
+
+  <div class="lab-grid">
+    <!-- 1. 脳力覚醒フラッシュ暗算 -->
+    <div class="lab-card">
+      <div>
+        <div class="card-tag">計算力・瞬間記憶</div>
+        <div class="card-title">脳力覚醒フラッシュ暗算</div>
+        <div class="card-desc">全5段階の難易度で瞬間計算力と作業記憶を測定。全3問の回答速度と正確性から推定脳年齢を割り出します。</div>
+      </div>
+      <a href="flash.html" class="play-btn">暗算テストを開始する →</a>
+    </div>
+
+    <!-- 2. 超精密・反射神経測定 -->
+    <div class="lab-card">
+      <div>
+        <div class="card-tag">反射速度・集中力</div>
+        <div class="card-title">超精密・反射神経測定</div>
+        <div class="card-desc">画面が変化した瞬間に最速タップ！合計5回の測定値から平均ミリ秒、集中のブレ、全国推定偏差値を診断します。</div>
+      </div>
+      <a href="reflex.html" class="play-btn">反射速度を測定する →</a>
+    </div>
+
+    <!-- 3. 今後追加するスロット枠（準備中） -->
+    <div class="lab-card" style="opacity: 0.6; border-style: dashed;">
+      <div>
+        <div class="card-tag" style="color: var(--text-sub);">次回追加予定</div>
+        <div class="card-title">動体視力 / 判断力テスト</div>
+        <div class="card-desc">複数のターゲットから正解を瞬時に見つけ出す判断力シミュレーションを開発中です。</div>
+      </div>
+      <span class="play-btn" style="border-color: var(--border-color); color: var(--text-sub); cursor: default;">開発中…</span>
+    </div>
+  </div>
+
+  <div>
+    <a href="index.html" class="back-btn">← ポートフォリオに戻る</a>
+  </div>
+
+</body>
+</html>
