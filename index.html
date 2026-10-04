@@ -38,26 +38,15 @@
   transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
   cursor: pointer;
 }
-/* マウスストーカー（光の球）のスタイル */
-#mouse-stalker {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 40px;
-  height: 40px;
-  background: rgba(0, 240, 255, 0.4);
-  border-radius: 50%;
-  box-shadow: 0 0 20px rgba(0, 240, 255, 0.6);
-  pointer-events: none;
-  z-index: 10000;
-  opacity: 0;
-  transition: opacity 0.3s ease;
-}
-
-#mouse-stalker.active {
-  opacity: 1;
-}
-
+/* インクの飛沫スタイル */
+    .ink-drop {
+      position: fixed;
+      pointer-events: none;
+      border-radius: 50%;
+      z-index: 9999;
+      transform: translate(-50%, -50%);
+      transition: transform 0.6s cubic-bezier(0.1, 0.8, 0.3, 1), opacity 0.6s ease;
+    }
 .work-item:hover {
   /* ほんの少し手前に浮き上がらせる */
   transform: translateY(-8px);
