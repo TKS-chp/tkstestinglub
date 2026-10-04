@@ -459,8 +459,12 @@
       handleAction();
     });
 
+ // キーボードの最速判定（Enter または スペースキー）
     window.addEventListener('keydown', (e) => {
-      if (e.code === 'Space' && state !== 'finished') {
+      // キーの長押し連打による誤検知を遮断
+      if (e.repeat) return;
+
+      if ((e.code === 'Enter' || e.code === 'Space') && state !== 'finished') {
         e.preventDefault();
         handleAction();
       }
